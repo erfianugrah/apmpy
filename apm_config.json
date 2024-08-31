@@ -1,0 +1,5 @@
+{
+  "update_interval": 1,
+  "auto_start": true,
+  "target_program": "wezterm-gui.exe"
+}
