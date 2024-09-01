@@ -42,12 +42,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: apm_tracker_windows
-          path: dist/*.exe
+          path: dist/apm.exe
 
   release:
     needs: build_windows
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
 
     steps:
       - name: Download Windows Executable
@@ -55,9 +57,12 @@ jobs:
         with:
           name: apm_tracker_windows
 
+      - name: Display structure of downloaded files
+        run: ls -R
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: apm_tracker.exe
+          files: apm.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
