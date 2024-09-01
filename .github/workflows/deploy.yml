@@ -1,4 +1,4 @@
-name: Windows Build and Release APM Tracker
+name: Windows and Linux Build and Release APM Tracker
 
 on:
   push:
@@ -44,8 +44,40 @@ jobs:
           name: apm_tracker_windows
           path: dist/apm.exe
 
+  build_linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.5'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller==6.10.0 matplotlib
+
+      - name: Build Linux Executable
+        run: |
+          MatplotlibPath=$(python -c "import matplotlib; import os; print(os.path.dirname(matplotlib.__file__))")
+          pyinstaller --onefile --add-data "$MatplotlibPath:matplotlib" apm.py
+
+      - name: List dist directory
+        run: ls -l dist
+
+      - name: Archive Linux Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: apm_tracker_linux
+          path: dist/apm
+
   release:
-    needs: build_windows
+    needs: [build_windows, build_linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
@@ -57,12 +89,19 @@ jobs:
         with:
           name: apm_tracker_windows
 
+      - name: Download Linux Executable
+        uses: actions/download-artifact@v4
+        with:
+          name: apm_tracker_linux
+
       - name: Display structure of downloaded files
         run: ls -R
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: apm.exe
+          files: |
+            apm.exe
+            apm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
