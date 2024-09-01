@@ -1,69 +1,123 @@
-import keyboard
-import mouse
 import time
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font as tkfont
 import psutil
 import threading
-import array
 import json
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.animation as animation
 import os
 from collections import deque
 import platform
-
-# Conditional import for Windows-specific functionality
-if platform.system() == 'Windows':
-    from win32 import win32gui, win32process
-
-class RingBuffer:
-    def __init__(self, size):
-        self.max_size = size
-        self.data = array.array('d', [0] * size)
-        self.size = 0
-        self.index = 0
-
-    def append(self, value):
-        if self.size < self.max_size:
-            self.data[self.size] = value
-            self.size += 1
-        else:
-            self.data[self.index] = value
-            self.index = (self.index + 1) % self.max_size
-
-    def get_all(self):
-        return self.data[:self.size]
+import win32gui
+import win32con
+import win32api
+from pynput import keyboard, mouse
+from PIL import Image, ImageTk
 
 class APMTracker:
     def __init__(self):
-        self.actions = RingBuffer(3600)  # Store actions for the last hour
-        self.effective_actions = RingBuffer(3600)
+        self.actions = deque(maxlen=3600)  # Store actions for the last hour
+        self.effective_actions = deque(maxlen=3600)
+        self.last_action_time = 0
+        self.action_cooldown = 0.05  # 50ms cooldown between actions
+        self.eapm_cooldown = 0.5  # 500ms cooldown for eAPM
+        self.last_eapm_action_time = 0
+        self.last_action_type = None
         self.start_time = time.time()
         self.peak_apm = 0
         self.peak_eapm = 0
         self.running = True
         self.target_program = ""
         self.update_interval = 500  # milliseconds
-        self.graph_needs_update = True  # Track if the graph needs updating
+        self.graph_needs_update = True
+        self.bg_color = '#F5F5F5'  # Off-white background color
+        self.last_mini_size = (0, 0)  # Store last mini-view size
+        self.input_event = threading.Event()
+        self.icon_path = None
 
-        # New attributes for improved eAPM calculation
-        self.action_threshold = 0.05  # 50ms threshold for rapid repeated actions
-        self.recent_actions = deque(maxlen=10)  # Store recent actions for analysis
-        self.unit_selection_count = 0
-        self.last_selection_time = 0
-        self.selection_threshold = 0.5  # 500ms threshold for unit selection
+    def load_icon(self):
+        if platform.system() == "Windows":
+            icon_path = os.path.join(os.path.dirname(__file__), 'icons', 'keebfire.ico')
+        else:  # Linux
+            icon_path = os.path.join(os.path.dirname(__file__), 'icons', 'keebfire.png')
+        
+        print(f"Attempting to load icon from: {icon_path}")
+        if os.path.exists(icon_path):
+            self.icon_path = icon_path
+            print(f"Icon file found: {self.icon_path}")
+        else:
+            print(f"Icon file not found: {icon_path}")
 
-        self.setup_gui()
-        self.load_settings()
-        self.input_thread = threading.Thread(target=self.input_loop, daemon=True)
+
+    def on_action(self, action_type):
+        current_time = time.time()
+
+        if self.target_program:
+            try:
+                if platform.system() == 'Windows':
+                    hwnd = win32gui.GetForegroundWindow()
+                    _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                    active_window = psutil.Process(pid).name().lower()
+                else:
+                    active_window = psutil.Process(os.getpid()).name().lower()
+                
+                if active_window != self.target_program:
+                    return
+            except Exception:
+                return
+
+        # APM calculation (only keystrokes and mouse clicks)
+        if action_type in ['keyboard', 'mouse_click']:
+            if current_time - self.last_action_time >= self.action_cooldown:
+                self.actions.append(current_time)
+                self.last_action_time = current_time
+
+        # Strict eAPM calculation
+        if self.is_effective_action(action_type, current_time):
+            self.effective_actions.append(current_time)
+            self.last_eapm_action_time = current_time
+            self.last_action_type = action_type
+
+        self.graph_needs_update = True
+        self.input_event.set()  # Signal that an action occurred
+
+    def is_effective_action(self, action_type, current_time):
+        if (current_time - self.last_eapm_action_time < self.eapm_cooldown or
+            action_type == self.last_action_type):
+            return False
+
+        if action_type in ['keyboard', 'mouse_click']:
+            return True
+        elif action_type == 'selection' and self.last_action_type != 'selection':
+            return True
+
+        return False
 
     def setup_gui(self):
         self.root = tk.Tk()
         self.root.title("APM Tracker")
         self.root.geometry("600x400")
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+        # Load and set the icon
+        self.load_icon()
+        if self.icon_path:
+            try:
+                if platform.system() == "Windows":
+                    print("Setting icon for Windows")
+                    self.root.iconbitmap(default=self.icon_path)
+                else:  # Linux
+                    print("Setting icon for Linux")
+                    img = tk.PhotoImage(file=self.icon_path)
+                    self.root.tk.call('wm', 'iconphoto', self.root._w, img)
+                print("Icon set successfully for main window")
+            except Exception as e:
+                print(f"Error setting icon: {e}")
+        else:
+            print("No icon path set, skipping icon setup")
 
         style = ttk.Style(self.root)
         style.theme_use('clam')  # Set a modern theme
@@ -88,43 +142,61 @@ class APMTracker:
 
         # Create mini-view
         self.mini_window = tk.Toplevel(self.root)
-        self.mini_window.overrideredirect(True)
+        self.mini_window.title("APM Tracker Mini")
+        self.mini_window.geometry("150x70")  # Set initial size
         self.mini_window.attributes('-topmost', True)
-        self.mini_window.configure(bg='#2c2c2c')
-        self.mini_window.withdraw()
+        self.mini_window.withdraw()  # Initially hide the mini-view
+
+        # Set the icon for the mini-view as well
+        if self.icon_path:
+            try:
+                if platform.system() == "Windows":
+                    print("Setting icon for mini-view on Windows")
+                    self.mini_window.iconbitmap(default=self.icon_path)
+                else:  # Linux
+                    print("Setting icon for mini-view on Linux")
+                    img = tk.PhotoImage(file=self.icon_path)
+                    self.mini_window.tk.call('wm', 'iconphoto', self.mini_window._w, img)
+                print("Icon set successfully for mini-view")
+            except Exception as e:
+                print(f"Error setting icon for mini-view: {e}")
+        else:
+            print("No icon path set, skipping icon setup for mini-view")
+
+        # Remove window decorations but keep it detectable
+        self.mini_window.overrideredirect(True)
 
         # Create a frame to organize labels
-        self.mini_frame = tk.Frame(self.mini_window, bg='#2c2c2c')
-        self.mini_frame.pack(expand=True, fill='both', padx=5, pady=5)
+        self.mini_frame = tk.Frame(self.mini_window, bg=self.bg_color)
+        self.mini_frame.pack(expand=True, fill='both')
 
         # Labels with custom styling
         self.mini_apm_var = tk.StringVar()
         self.mini_eapm_var = tk.StringVar()
 
-        self.mini_apm_label = tk.Label(self.mini_frame, textvariable=self.mini_apm_var, font=self.custom_font, fg="white", bg='#2c2c2c')
-        self.mini_apm_label.pack(anchor='w')
-        self.mini_eapm_label = tk.Label(self.mini_frame, textvariable=self.mini_eapm_var, font=self.custom_font, fg="white", bg='#2c2c2c')
-        self.mini_eapm_label.pack(anchor='w')
+        self.mini_apm_label = tk.Label(self.mini_frame, textvariable=self.mini_apm_var, font=self.custom_font, bg=self.bg_color)
+        self.mini_apm_label.pack(anchor='w', padx=5, pady=2)
+        self.mini_eapm_label = tk.Label(self.mini_frame, textvariable=self.mini_eapm_var, font=self.custom_font, bg=self.bg_color)
+        self.mini_eapm_label.pack(anchor='w', padx=5, pady=2)
 
         # Add dragging functionality to mini-view
         self.mini_window.bind('<ButtonPress-1>', self.start_move)
         self.mini_window.bind('<B1-Motion>', self.do_move)
-        self.mini_window.bind('<Double-Button-1>', lambda e: self.toggle_view())
+        self.mini_window.bind('<Double-Button-1>', self.toggle_view)
 
         self.is_mini_view = False
 
-        # Set up hotkeys
-        if platform.system() == 'Windows':
-            keyboard.add_hotkey('ctrl+shift+a', self.toggle_view)
-            keyboard.add_hotkey('ctrl+shift+q', self.on_closing)
-        else:
-            # For Linux, we'll use a different approach for hotkeys
-            # This could be implemented using a library like pynput
-            print("Hotkeys not supported on this platform")
+    def set_appwindow(self, root):
+        hwnd = win32gui.GetParent(root.winfo_id())
+        style = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+        style = style & ~win32con.WS_EX_TOOLWINDOW
+        style = style | win32con.WS_EX_APPWINDOW
+        win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, style)
+        root.wm_withdraw()
+        root.after(10, lambda: root.wm_deiconify())
 
     def setup_main_frame(self):
         font_large = ("Helvetica", 24, 'bold')
-        font_small = ("Helvetica", 12)
 
         self.current_apm_var = tk.StringVar()
         self.current_eapm_var = tk.StringVar()
@@ -147,6 +219,15 @@ class APMTracker:
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.graph_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        self.apm_bars = self.ax.bar(range(60), [0]*60, color='blue', alpha=0.5, label='APM')
+        self.eapm_bars = self.ax.bar(range(60), [0]*60, color='green', alpha=0.5, label='eAPM')
+        self.ax.legend(loc='upper right')
+        self.ax.set_title('APM and eAPM over time')
+        self.ax.set_xlabel('Time (seconds)')
+        self.ax.set_ylabel('Number of Actions')
+
+        self.ani = animation.FuncAnimation(self.figure, self.update_graph, interval=1000, blit=False)
 
     def setup_settings_frame(self):
         ttk.Label(self.settings_frame, text="Transparency:").pack(pady=5)
@@ -171,7 +252,6 @@ class APMTracker:
             _, pid = win32process.GetWindowThreadProcessId(hwnd)
             active_window = psutil.Process(pid).name()
         else:
-            # For Linux, we can use psutil to get the active window
             active_window = psutil.Process(os.getpid()).name()
         
         self.target_program_entry.delete(0, tk.END)
@@ -187,116 +267,93 @@ class APMTracker:
             'target_program': self.target_program,
             'transparency': self.transparency_scale.get()
         }
-        with open('settings.json', 'w') as f:
-            json.dump(settings, f)
+        try:
+            with open('settings.json', 'w') as f:
+                json.dump(settings, f)
+        except IOError as e:
+            print(f"Error saving settings: {e}")
 
     def load_settings(self):
         try:
             with open('settings.json', 'r') as f:
                 settings = json.load(f)
-                self.target_program = settings['target_program']
-                self.transparency_scale.set(settings['transparency'])
+                self.target_program = settings.get('target_program', '')
+                self.transparency_scale.set(settings.get('transparency', 1.0))
         except FileNotFoundError:
-            pass
-
-    def on_action(self, action_type):
-        current_time = time.time()
-
-        if self.target_program:
-            try:
-                if platform.system() == 'Windows':
-                    hwnd = win32gui.GetForegroundWindow()
-                    _, pid = win32process.GetWindowThreadProcessId(hwnd)
-                    active_window = psutil.Process(pid).name().lower()
-                else:
-                    # For Linux, we can use psutil to get the active window
-                    active_window = psutil.Process(os.getpid()).name().lower()
-                
-                if active_window != self.target_program:
-                    return
-            except Exception:
-                return
-
-        self.actions.append(current_time)
-        
-        # Improved eAPM calculation
-        if self.is_effective_action(action_type, current_time):
-            self.effective_actions.append(current_time)
-
-        self.graph_needs_update = True
-
-    def is_effective_action(self, action_type, current_time):
-        # Ignore rapid repeated actions
-        if self.recent_actions and current_time - self.recent_actions[-1][1] < self.action_threshold:
-            return False
-
-        # Special handling for unit selection
-        if action_type == 'selection':
-            if current_time - self.last_selection_time > self.selection_threshold:
-                self.unit_selection_count = 1
-                self.last_selection_time = current_time
-                return True
-            else:
-                self.unit_selection_count += 1
-                if self.unit_selection_count > 2:  # More than double-click is considered spam
-                    return False
-                self.last_selection_time = current_time
-                return True
-
-        # Consider the action effective if it's different from the previous action
-        if self.recent_actions and action_type == self.recent_actions[-1][0]:
-            return False
-
-        self.recent_actions.append((action_type, current_time))
-        return True
+            print("Settings file not found. Using defaults.")
+        except json.JSONDecodeError:
+            print("Error decoding settings file. Using defaults.")
 
     def input_loop(self):
-        sleep_interval = 0.01
-        keyboard.hook(lambda e: self.on_action('keyboard'))
-        mouse.hook(lambda e: self.on_action('mouse' if e.event_type in ('down', 'click') else 'selection'))
+        def on_press(key):
+            self.on_action('keyboard')
+
+        def on_click(x, y, button, pressed):
+            if pressed:
+                self.on_action('mouse_click')
+
+        def on_move(x, y):
+            self.on_action('selection')
+
+        keyboard_listener = keyboard.Listener(on_press=on_press)
+        mouse_listener = mouse.Listener(on_click=on_click, on_move=on_move)
+
+        keyboard_listener.start()
+        mouse_listener.start()
+
         while self.running:
-            time.sleep(sleep_interval)  
-        keyboard.unhook_all()
-        mouse.unhook_all()
+            self.input_event.wait(1)  # Wait for 1 second or until set()
+            self.input_event.clear()
+
+        keyboard_listener.stop()
+        mouse_listener.stop()
 
     def calculate_current_apm(self):
         current_time = time.time()
         minute_ago = current_time - 60
-        recent_actions = [t for t in self.actions.get_all() if t > minute_ago]
+        recent_actions = [t for t in self.actions if t > minute_ago]
         return len(recent_actions)
 
     def calculate_current_eapm(self):
         current_time = time.time()
         minute_ago = current_time - 60
-        recent_effective_actions = [t for t in self.effective_actions.get_all() if t > minute_ago]
+        recent_effective_actions = [t for t in self.effective_actions if t > minute_ago]
         return len(recent_effective_actions)
 
     def calculate_average_apm(self):
-        total_actions = len(self.actions.get_all())
+        total_actions = len(self.actions)
         elapsed_time = (time.time() - self.start_time) / 60  # in minutes
         return total_actions / elapsed_time if elapsed_time > 0 else 0
 
     def calculate_average_eapm(self):
-        total_effective_actions = len(self.effective_actions.get_all())
+        total_effective_actions = len(self.effective_actions)
         elapsed_time = (time.time() - self.start_time) / 60  # in minutes
         return total_effective_actions / elapsed_time if elapsed_time > 0 else 0
 
-    def update_graph(self, force_update=False):
-        if not self.graph_needs_update and not force_update:
-            return
-        times = self.actions.get_all()
-        effective_times = self.effective_actions.get_all()
+    def update_graph(self, frame):
+        current_time = time.time()
+        apm_data = [0] * 60
+        eapm_data = [0] * 60
 
-        self.ax.clear()
-        self.ax.hist(times, bins=60, color='blue', alpha=0.5, label='APM')
-        self.ax.hist(effective_times, bins=60, color='green', alpha=0.5, label='eAPM')
-        self.ax.legend(loc='upper right')
-        self.ax.set_title('APM and eAPM over time')
-        self.ax.set_xlabel('Time (seconds)')
-        self.ax.set_ylabel('Number of Actions')
+        for t in self.actions:
+            if current_time - t <= 60:
+                index = int(current_time - t)
+                apm_data[index] += 1
 
-        self.canvas.draw()
-        self.graph_needs_update = False
+        for t in self.effective_actions:
+            if current_time - t <= 60:
+                index = int(current_time - t)
+                eapm_data[index] += 1
+
+        for rect, h in zip(self.apm_bars, apm_data):
+            rect.set_height(h)
+        for rect, h in zip(self.eapm_bars, eapm_data):
+            rect.set_height(h)
+
+        self.ax.relim()
+        self.ax.autoscale_view()
+
+        return self.apm_bars + self.eapm_bars
 
     def update_gui(self):
         if not self.running:
@@ -323,8 +380,6 @@ class APMTracker:
         # Adjust mini-view size based on content
         self.adjust_mini_view_size()
 
-        self.update_graph()
-
         # Only update every 1 second in mini-view to reduce load
         self.root.after(1000 if self.is_mini_view else self.update_interval, self.update_gui)
 
@@ -341,15 +396,17 @@ class APMTracker:
         width += 10
         height += 10
 
-        # Set the new size of the mini window
-        self.mini_window.geometry(f"{width}x{height}")
+        # Only update if the size has changed
+        if (width, height) != self.last_mini_size:
+            self.mini_window.geometry(f"{width}x{height}")
+            self.last_mini_size = (width, height)
 
-    def toggle_view(self):
+    def toggle_view(self, event=None):
         self.is_mini_view = not self.is_mini_view
         if self.is_mini_view:
             self.root.withdraw()
             self.mini_window.deiconify()
-            self.adjust_mini_view_size()  # Adjust size when showing mini-view
+            self.set_appwindow(self.mini_window)
         else:
             self.mini_window.withdraw()
             self.root.deiconify()
@@ -359,19 +416,26 @@ class APMTracker:
         self.y = event.y
 
     def do_move(self, event):
-        x = event.x_root - self.x
-        y = event.y_root - self.y
+        deltax = event.x - self.x
+        deltay = event.y - self.y
+        x = self.mini_window.winfo_x() + deltax
+        y = self.mini_window.winfo_y() + deltay
         self.mini_window.geometry(f"+{x}+{y}")
 
     def on_closing(self):
         self.save_settings()
         self.running = False
+        self.input_event.set()  # Ensure input_loop exits
         self.input_thread.join()
         self.root.quit()
 
     def run(self):
+        self.setup_gui()
+        self.load_settings()
+        self.input_thread = threading.Thread(target=self.input_loop, daemon=True)
         self.input_thread.start()
         self.update_gui()
+        self.mini_window.withdraw()  # Ensure the mini-view is hidden before starting the main loop
         self.root.mainloop()
 
 if __name__ == "__main__":
