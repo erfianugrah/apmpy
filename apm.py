@@ -36,21 +36,23 @@ class APMTracker:
         self.bg_color = '#F5F5F5'  # Off-white background color
         self.last_mini_size = (0, 0)  # Store last mini-view size
         self.input_event = threading.Event()
-        self.icon_path = None
+        self.icon_image = None  # We'll store the PhotoImage object here
 
     def load_icon(self):
         if platform.system() == "Windows":
-            icon_path = os.path.join(os.path.dirname(__file__), 'icons', 'keebfire.ico')
+            icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'icons', 'keebfire.ico'))
         else:  # Linux
-            icon_path = os.path.join(os.path.dirname(__file__), 'icons', 'keebfire.png')
+            icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'icons', 'keebfire.png'))
         
         print(f"Attempting to load icon from: {icon_path}")
         if os.path.exists(icon_path):
-            self.icon_path = icon_path
-            print(f"Icon file found: {self.icon_path}")
+            if platform.system() == "Windows":
+                self.icon_path = icon_path
+            else:  # Linux
+                self.icon_image = tk.PhotoImage(file=icon_path)
+            print(f"Icon file found: {icon_path}")
         else:
             print(f"Icon file not found: {icon_path}")
-
 
     def on_action(self, action_type):
         current_time = time.time()
@@ -104,17 +106,17 @@ class APMTracker:
 
         # Load and set the icon
         self.load_icon()
-        if self.icon_path:
+        if platform.system() == "Windows" and hasattr(self, 'icon_path'):
             try:
-                if platform.system() == "Windows":
-                    print("Setting icon for Windows")
-                    self.root.iconbitmap(default=self.icon_path)
-                else:  # Linux
-                    print("Setting icon for Linux")
-                    img = tk.PhotoImage(file=self.icon_path)
-                    self.root.tk.call('wm', 'iconphoto', self.root._w, img)
-                print("Icon set successfully for main window")
-            except Exception as e:
+                self.root.iconbitmap(self.icon_path)
+                print("Icon set successfully for main window (Windows)")
+            except tk.TclError as e:
+                print(f"Error setting icon: {e}")
+        elif self.icon_image:
+            try:
+                self.root.tk.call('wm', 'iconphoto', self.root._w, self.icon_image)
+                print("Icon set successfully for main window (Linux)")
+            except tk.TclError as e:
                 print(f"Error setting icon: {e}")
         else:
             print("No icon path set, skipping icon setup")
@@ -148,17 +150,17 @@ class APMTracker:
         self.mini_window.withdraw()  # Initially hide the mini-view
 
         # Set the icon for the mini-view as well
-        if self.icon_path:
+        if platform.system() == "Windows" and hasattr(self, 'icon_path'):
             try:
-                if platform.system() == "Windows":
-                    print("Setting icon for mini-view on Windows")
-                    self.mini_window.iconbitmap(default=self.icon_path)
-                else:  # Linux
-                    print("Setting icon for mini-view on Linux")
-                    img = tk.PhotoImage(file=self.icon_path)
-                    self.mini_window.tk.call('wm', 'iconphoto', self.mini_window._w, img)
-                print("Icon set successfully for mini-view")
-            except Exception as e:
+                self.mini_window.iconbitmap(self.icon_path)
+                print("Icon set successfully for mini-view (Windows)")
+            except tk.TclError as e:
+                print(f"Error setting icon for mini-view: {e}")
+        elif self.icon_image:
+            try:
+                self.mini_window.tk.call('wm', 'iconphoto', self.mini_window._w, self.icon_image)
+                print("Icon set successfully for mini-view (Linux)")
+            except tk.TclError as e:
                 print(f"Error setting icon for mini-view: {e}")
         else:
             print("No icon path set, skipping icon setup for mini-view")
@@ -406,7 +408,8 @@ class APMTracker:
         if self.is_mini_view:
             self.root.withdraw()
             self.mini_window.deiconify()
-            self.set_appwindow(self.mini_window)
+            if platform.system() == 'Windows':
+                self.set_appwindow(self.mini_window)
         else:
             self.mini_window.withdraw()
             self.root.deiconify()
