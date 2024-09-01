@@ -11,6 +11,8 @@ import array
 import json
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import os
+from collections import deque
 
 class RingBuffer:
     def __init__(self, size):
@@ -40,9 +42,15 @@ class APMTracker:
         self.running = True
         self.target_program = ""
         self.update_interval = 500  # milliseconds
-        self.effective_threshold = 0.2  # 200ms
-        self.last_action_time = 0
         self.graph_needs_update = True  # Track if the graph needs updating
+
+        # New attributes for improved eAPM calculation
+        self.action_threshold = 0.05  # 50ms threshold for rapid repeated actions
+        self.recent_actions = deque(maxlen=10)  # Store recent actions for analysis
+        self.unit_selection_count = 0
+        self.last_selection_time = 0
+        self.selection_threshold = 0.5  # 500ms threshold for unit selection
+
         self.setup_gui()
         self.load_settings()
         self.input_thread = threading.Thread(target=self.input_loop, daemon=True)
@@ -71,27 +79,28 @@ class APMTracker:
         self.setup_graph_frame()
         self.setup_settings_frame()
 
+        # Define custom font
+        self.custom_font = tkfont.Font(family="Segoe UI", size=12)
+
         # Create mini-view
         self.mini_window = tk.Toplevel(self.root)
         self.mini_window.overrideredirect(True)
         self.mini_window.attributes('-topmost', True)
-        # self.mini_window.configure(bg="#2c2c2c", padx=5, pady=5)  # Dark background with padding
-        self.mini_window.geometry("90x65")  # Slightly larger for better spacing
+        self.mini_window.configure(bg='#2c2c2c')
         self.mini_window.withdraw()
 
-        # Define a custom font
-        custom_font = tkfont.Font(family="Segoe UI", size=12)  # Smaller font size for compactness
-
-        # Create a frame to organize labels better
-        mini_frame = ttk.Frame(self.mini_window, padding=(5, 5), style="Mini.TFrame")
-        mini_frame.pack(expand=True, fill='both')
+        # Create a frame to organize labels
+        self.mini_frame = tk.Frame(self.mini_window, bg='#2c2c2c')
+        self.mini_frame.pack(expand=True, fill='both', padx=5, pady=5)
 
         # Labels with custom styling
         self.mini_apm_var = tk.StringVar()
         self.mini_eapm_var = tk.StringVar()
 
-        tk.Label(mini_frame, textvariable=self.mini_apm_var, font=custom_font, fg="black").grid(row=0, column=0, sticky="w")
-        tk.Label(mini_frame, textvariable=self.mini_eapm_var, font=custom_font, fg="black").grid(row=1, column=0, sticky="w")
+        self.mini_apm_label = tk.Label(self.mini_frame, textvariable=self.mini_apm_var, font=self.custom_font, fg="white", bg='#2c2c2c')
+        self.mini_apm_label.pack(anchor='w')
+        self.mini_eapm_label = tk.Label(self.mini_frame, textvariable=self.mini_eapm_var, font=self.custom_font, fg="white", bg='#2c2c2c')
+        self.mini_eapm_label.pack(anchor='w')
 
         # Add dragging functionality to mini-view
         self.mini_window.bind('<ButtonPress-1>', self.start_move)
@@ -103,7 +112,6 @@ class APMTracker:
         # Set up hotkeys
         keyboard.add_hotkey('ctrl+shift+a', self.toggle_view)
         keyboard.add_hotkey('ctrl+shift+q', self.on_closing)
-
 
     def setup_main_frame(self):
         font_large = ("Helvetica", 24, 'bold')
@@ -177,7 +185,7 @@ class APMTracker:
         except FileNotFoundError:
             pass
 
-    def on_action(self):
+    def on_action(self, action_type):
         current_time = time.time()
 
         if self.target_program:
@@ -192,16 +200,41 @@ class APMTracker:
 
         self.actions.append(current_time)
         
-        if current_time - self.last_action_time > self.effective_threshold:
+        # Improved eAPM calculation
+        if self.is_effective_action(action_type, current_time):
             self.effective_actions.append(current_time)
-            self.last_action_time = current_time
 
         self.graph_needs_update = True
 
+    def is_effective_action(self, action_type, current_time):
+        # Ignore rapid repeated actions
+        if self.recent_actions and current_time - self.recent_actions[-1][1] < self.action_threshold:
+            return False
+
+        # Special handling for unit selection
+        if action_type == 'selection':
+            if current_time - self.last_selection_time > self.selection_threshold:
+                self.unit_selection_count = 1
+                self.last_selection_time = current_time
+                return True
+            else:
+                self.unit_selection_count += 1
+                if self.unit_selection_count > 2:  # More than double-click is considered spam
+                    return False
+                self.last_selection_time = current_time
+                return True
+
+        # Consider the action effective if it's different from the previous action
+        if self.recent_actions and action_type == self.recent_actions[-1][0]:
+            return False
+
+        self.recent_actions.append((action_type, current_time))
+        return True
+
     def input_loop(self):
         sleep_interval = 0.01
-        keyboard.hook(lambda e: self.on_action())
-        mouse.hook(lambda e: self.on_action() if e.event_type in ('down', 'click') else None)
+        keyboard.hook(lambda e: self.on_action('keyboard'))
+        mouse.hook(lambda e: self.on_action('mouse' if e.event_type in ('down', 'click') else 'selection'))
         while self.running:
             time.sleep(sleep_interval)  
         keyboard.unhook_all()
@@ -268,16 +301,36 @@ class APMTracker:
         self.mini_apm_var.set(f"APM: {current_apm}")
         self.mini_eapm_var.set(f"eAPM: {current_eapm}")
 
+        # Adjust mini-view size based on content
+        self.adjust_mini_view_size()
+
         self.update_graph()
 
         # Only update every 1 second in mini-view to reduce load
         self.root.after(1000 if self.is_mini_view else self.update_interval, self.update_gui)
+
+    def adjust_mini_view_size(self):
+        # Update the label sizes
+        self.mini_apm_label.update_idletasks()
+        self.mini_eapm_label.update_idletasks()
+
+        # Calculate the required width and height
+        width = max(self.mini_apm_label.winfo_reqwidth(), self.mini_eapm_label.winfo_reqwidth())
+        height = self.mini_apm_label.winfo_reqheight() + self.mini_eapm_label.winfo_reqheight()
+
+        # Add some padding
+        width += 10
+        height += 10
+
+        # Set the new size of the mini window
+        self.mini_window.geometry(f"{width}x{height}")
 
     def toggle_view(self):
         self.is_mini_view = not self.is_mini_view
         if self.is_mini_view:
             self.root.withdraw()
             self.mini_window.deiconify()
+            self.adjust_mini_view_size()  # Adjust size when showing mini-view
         else:
             self.mini_window.withdraw()
             self.root.deiconify()
