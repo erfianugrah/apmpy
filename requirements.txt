@@ -1,4 +1,8 @@
-keyboard==0.13.5
-matplotlib==3.9.2
-mouse==0.7.1
-psutil==6.0.0
+keyboard 
+mouse 
+psutil 
+matplotlib 
+pillow 
+pystray 
+pyinstaller 
+pywin32 
