@@ -3,7 +3,7 @@ name: Cross-Platform Build and Release APM Tracker
 on:
   push:
     tags:
-      - 'v*'  # Triggers the workflow on version tags, e.g., v1.0, v2.1
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -12,80 +12,106 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12.5'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install pyinstaller
 
       - name: Build Windows Executable
         run: |
           pyinstaller --onefile --noconsole apm.py
-        shell: cmd
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "PyInstaller failed"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: List dist directory
+        run: dir dist
 
       - name: Archive Windows Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: apm_tracker_windows
-          path: dist/apm_tracker.exe
+          path: dist/*.exe
 
   build_linux:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12.5'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install pyinstaller
 
       - name: Build Linux Executable
-        run: pyinstaller --onefile apm.py
+        run: |
+          pyinstaller --onefile apm.py
+          if [ $? -ne 0 ]; then
+            echo "PyInstaller failed"
+            exit 1
+          fi
+
+      - name: List dist directory
+        run: ls -l dist
 
       - name: Archive Linux Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: apm_tracker_linux
-          path: dist/apm_tracker
+          path: dist/apm
 
   build_macos:
     runs-on: macos-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12.5'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install pyinstaller
 
       - name: Build macOS Executable
-        run: pyinstaller --onefile apm.py
+        run: |
+          pyinstaller --onefile apm.py
+          if [ $? -ne 0 ]; then
+            echo "PyInstaller failed"
+            exit 1
+          fi
+
+      - name: List dist directory
+        run: ls -l dist
 
       - name: Archive macOS Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: apm_tracker_macos
-          path: dist/apm_tracker
+          path: dist/apm
 
   release:
     runs-on: ubuntu-latest
@@ -94,27 +120,22 @@ jobs:
 
     steps:
       - name: Download Windows Executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: apm_tracker_windows
 
       - name: Download Linux Executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: apm_tracker_linux
 
       - name: Download macOS Executable
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: apm_tracker_macos
 
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: |
-            apm_tracker_windows
-            apm_tracker_linux
-            apm_tracker_macos
-          tag: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          artifacts: "apm_tracker_windows.exe,apm_tracker_linux,apm_tracker_macos"
           token: ${{ secrets.GITHUB_TOKEN }}
