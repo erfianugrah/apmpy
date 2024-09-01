@@ -1,5 +1,4 @@
 keyboard==0.13.5
+matplotlib==3.9.2
 mouse==0.7.1
-psutil==5.9.5
-matplotlib==3.7.2
-PyWin32==305; sys_platform == 'win32'
+psutil==6.0.0
