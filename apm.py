@@ -4,7 +4,6 @@ import time
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font as tkfont
-from win32 import win32gui, win32process
 import psutil
 import threading
 import array
@@ -13,6 +12,11 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import os
 from collections import deque
+import platform
+
+# Conditional import for Windows-specific functionality
+if platform.system() == 'Windows':
+    from win32 import win32gui, win32process
 
 class RingBuffer:
     def __init__(self, size):
@@ -110,8 +114,13 @@ class APMTracker:
         self.is_mini_view = False
 
         # Set up hotkeys
-        keyboard.add_hotkey('ctrl+shift+a', self.toggle_view)
-        keyboard.add_hotkey('ctrl+shift+q', self.on_closing)
+        if platform.system() == 'Windows':
+            keyboard.add_hotkey('ctrl+shift+a', self.toggle_view)
+            keyboard.add_hotkey('ctrl+shift+q', self.on_closing)
+        else:
+            # For Linux, we'll use a different approach for hotkeys
+            # This could be implemented using a library like pynput
+            print("Hotkeys not supported on this platform")
 
     def setup_main_frame(self):
         font_large = ("Helvetica", 24, 'bold')
@@ -157,9 +166,14 @@ class APMTracker:
         self.mini_window.attributes('-alpha', alpha)
 
     def set_target_program(self):
-        hwnd = win32gui.GetForegroundWindow()
-        _, pid = win32process.GetWindowThreadProcessId(hwnd)
-        active_window = psutil.Process(pid).name()
+        if platform.system() == 'Windows':
+            hwnd = win32gui.GetForegroundWindow()
+            _, pid = win32process.GetWindowThreadProcessId(hwnd)
+            active_window = psutil.Process(pid).name()
+        else:
+            # For Linux, we can use psutil to get the active window
+            active_window = psutil.Process(os.getpid()).name()
+        
         self.target_program_entry.delete(0, tk.END)
         self.target_program_entry.insert(0, active_window.lower())
         self.target_program = active_window.lower()
@@ -190,9 +204,14 @@ class APMTracker:
 
         if self.target_program:
             try:
-                hwnd = win32gui.GetForegroundWindow()
-                _, pid = win32process.GetWindowThreadProcessId(hwnd)
-                active_window = psutil.Process(pid).name().lower()
+                if platform.system() == 'Windows':
+                    hwnd = win32gui.GetForegroundWindow()
+                    _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                    active_window = psutil.Process(pid).name().lower()
+                else:
+                    # For Linux, we can use psutil to get the active window
+                    active_window = psutil.Process(os.getpid()).name().lower()
+                
                 if active_window != self.target_program:
                     return
             except Exception:
