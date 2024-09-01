@@ -27,8 +27,9 @@ jobs:
 
       - name: Build Windows Executable
         run: |
-          pyinstaller --onefile --noconsole --add-data "C:\hostedtoolcache\windows\Python\3.12.5\x64\Lib\site-packages\matplotlib;matplotlib" apm.py
-        shell: cmd
+          $MatplotlibPath = python -c "import matplotlib; print(matplotlib.__path__[0])"
+          pyinstaller --onefile --noconsole --add-data "$MatplotlibPath;matplotlib" apm.py
+        shell: pwsh
 
       - name: List dist directory
         run: dir dist
