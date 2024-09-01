@@ -32,7 +32,7 @@ jobs:
             Write-Error "Failed to find matplotlib path"
             exit 1
           }
-          pyinstaller --onefile --noconsole --add-data "$MatplotlibPath;matplotlib" --add-data "icons;icons" apm.py
+          pyinstaller --onefile --noconsole --add-data "$MatplotlibPath;matplotlib" --add-data "icons;icons" --icon=icons/keebfire.ico apm.py
         shell: pwsh
 
       - name: List dist directory
