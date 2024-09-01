@@ -1,4 +1,4 @@
-name: Cross-Platform Build and Release APM Tracker
+name: Windows Build and Release APM Tracker
 
 on:
   push:
@@ -23,16 +23,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyinstaller
+          pip install pyinstaller==6.10.0
 
       - name: Build Windows Executable
         run: |
-          pyinstaller --onefile --noconsole apm.py
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "PyInstaller failed"
-            exit 1
-          }
-        shell: pwsh
+          pyinstaller --onefile --noconsole --add-data "C:\hostedtoolcache\windows\Python\3.12.5\x64\Lib\site-packages\matplotlib;matplotlib" apm.py
+        shell: cmd
 
       - name: List dist directory
         run: dir dist
@@ -43,80 +39,10 @@ jobs:
           name: apm_tracker_windows
           path: dist/*.exe
 
-  build_linux:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12.5'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
-
-      - name: Build Linux Executable
-        run: |
-          pyinstaller --onefile apm.py
-          if [ $? -ne 0 ]; then
-            echo "PyInstaller failed"
-            exit 1
-          fi
-
-      - name: List dist directory
-        run: ls -l dist
-
-      - name: Archive Linux Executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: apm_tracker_linux
-          path: dist/apm
-
-  build_macos:
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12.5'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
-
-      - name: Build macOS Executable
-        run: |
-          pyinstaller --onefile apm.py
-          if [ $? -ne 0 ]; then
-            echo "PyInstaller failed"
-            exit 1
-          fi
-
-      - name: List dist directory
-        run: ls -l dist
-
-      - name: Archive macOS Executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: apm_tracker_macos
-          path: dist/apm
-
   release:
+    needs: build_windows
     runs-on: ubuntu-latest
-    needs: [build_windows, build_linux, build_macos]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/')
 
     steps:
       - name: Download Windows Executable
@@ -124,18 +50,9 @@ jobs:
         with:
           name: apm_tracker_windows
 
-      - name: Download Linux Executable
-        uses: actions/download-artifact@v4
-        with:
-          name: apm_tracker_linux
-
-      - name: Download macOS Executable
-        uses: actions/download-artifact@v4
-        with:
-          name: apm_tracker_macos
-
       - name: Create Release
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v1
         with:
-          artifacts: "apm_tracker_windows.exe,apm_tracker_linux,apm_tracker_macos"
-          token: ${{ secrets.GITHUB_TOKEN }}
+          files: apm_tracker.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
