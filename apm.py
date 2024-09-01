@@ -75,23 +75,23 @@ class APMTracker:
         self.mini_window = tk.Toplevel(self.root)
         self.mini_window.overrideredirect(True)
         self.mini_window.attributes('-topmost', True)
-        self.mini_window.configure(bg="#2c2c2c", padx=10, pady=10)  # Dark background with padding
-        self.mini_window.geometry("240x100")  # Slightly larger for better spacing
+        # self.mini_window.configure(bg="#2c2c2c", padx=5, pady=5)  # Dark background with padding
+        self.mini_window.geometry("90x65")  # Slightly larger for better spacing
         self.mini_window.withdraw()
 
         # Define a custom font
-        custom_font = tkfont.Font(family="Segoe UI", size=12, weight="bold")  # Smaller font size for compactness
+        custom_font = tkfont.Font(family="Segoe UI", size=12)  # Smaller font size for compactness
 
         # Create a frame to organize labels better
-        mini_frame = ttk.Frame(self.mini_window, padding=(10, 10), style="Mini.TFrame")
+        mini_frame = ttk.Frame(self.mini_window, padding=(5, 5), style="Mini.TFrame")
         mini_frame.pack(expand=True, fill='both')
 
         # Labels with custom styling
         self.mini_apm_var = tk.StringVar()
         self.mini_eapm_var = tk.StringVar()
 
-        tk.Label(mini_frame, textvariable=self.mini_apm_var, font=custom_font, fg="white", bg="#2c2c2c").grid(row=0, column=0, sticky="w")
-        tk.Label(mini_frame, textvariable=self.mini_eapm_var, font=custom_font, fg="white", bg="#2c2c2c").grid(row=1, column=0, sticky="w")
+        tk.Label(mini_frame, textvariable=self.mini_apm_var, font=custom_font, fg="black").grid(row=0, column=0, sticky="w")
+        tk.Label(mini_frame, textvariable=self.mini_eapm_var, font=custom_font, fg="black").grid(row=1, column=0, sticky="w")
 
         # Add dragging functionality to mini-view
         self.mini_window.bind('<ButtonPress-1>', self.start_move)
@@ -237,9 +237,9 @@ class APMTracker:
 
         self.ax.clear()
         self.ax.hist(times, bins=60, color='blue', alpha=0.5, label='APM')
-        self.ax.hist(effective_times, bins=60, color='green', alpha=0.5, label='EAPM')
+        self.ax.hist(effective_times, bins=60, color='green', alpha=0.5, label='eAPM')
         self.ax.legend(loc='upper right')
-        self.ax.set_title('APM and EAPM over time')
+        self.ax.set_title('APM and eAPM over time')
         self.ax.set_xlabel('Time (seconds)')
         self.ax.set_ylabel('Number of Actions')
 
@@ -256,17 +256,17 @@ class APMTracker:
         avg_eapm = self.calculate_average_eapm()
 
         self.current_apm_var.set(f"Current APM: {current_apm}")
-        self.current_eapm_var.set(f"Current EAPM: {current_eapm}")
+        self.current_eapm_var.set(f"Current eAPM: {current_eapm}")
         self.peak_apm = max(self.peak_apm, current_apm)
         self.peak_eapm = max(self.peak_eapm, current_eapm)
         self.peak_apm_var.set(f"Peak APM: {self.peak_apm}")
-        self.peak_eapm_var.set(f"Peak EAPM: {self.peak_eapm}")
+        self.peak_eapm_var.set(f"Peak eAPM: {self.peak_eapm}")
         self.avg_apm_var.set(f"Average APM: {avg_apm:.2f}")
-        self.avg_eapm_var.set(f"Average EAPM: {avg_eapm:.2f}")
+        self.avg_eapm_var.set(f"Average eAPM: {avg_eapm:.2f}")
 
         # Update the mini view
         self.mini_apm_var.set(f"APM: {current_apm}")
-        self.mini_eapm_var.set(f"EAPM: {current_eapm}")
+        self.mini_eapm_var.set(f"eAPM: {current_eapm}")
 
         self.update_graph()
 
