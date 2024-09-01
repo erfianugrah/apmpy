@@ -26,7 +26,7 @@ jobs:
 
       - name: Build Windows Executable
         run: |
-          pyinstaller --onefile --noconsole apm_tracker.py
+          pyinstaller --onefile --noconsole apm.py
         shell: cmd
 
       - name: Archive Windows Executable
@@ -53,7 +53,7 @@ jobs:
           pip install pyinstaller
 
       - name: Build Linux Executable
-        run: pyinstaller --onefile apm_tracker.py
+        run: pyinstaller --onefile apm.py
 
       - name: Archive Linux Executable
         uses: actions/upload-artifact@v3
@@ -79,7 +79,7 @@ jobs:
           pip install pyinstaller
 
       - name: Build macOS Executable
-        run: pyinstaller --onefile apm_tracker.py
+        run: pyinstaller --onefile apm.py
 
       - name: Archive macOS Executable
         uses: actions/upload-artifact@v3
