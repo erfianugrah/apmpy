@@ -2,6 +2,7 @@ import time
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font as tkfont
+from tkinter import PhotoImage
 import psutil
 import threading
 import json
@@ -38,66 +39,26 @@ class APMTracker:
         self.input_event = threading.Event()
         self.root = None
         self.mini_window = None
-        self.load_icon()
+        self.icon_path = self.get_icon_path()
 
 
-    def load_icon(self):
-        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-            # Running as compiled executable
-            base_path = sys._MEIPASS
-        else:
-            # Running in a normal Python environment
-            base_path = os.path.dirname(os.path.abspath(__file__))
-
-        # Define the icons directory
-        icons_dir = os.path.join(base_path, 'icons')
-
-        if platform.system() == "Windows":
-            icon_path = os.path.join(icons_dir, 'keebfire.ico')
-        else:  # Linux
-            icon_path = os.path.join(icons_dir, 'keebfire.png')
-
-        print(f"Attempting to load icon from: {icon_path}")
+    def get_icon_path(self):
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        icon_path = os.path.join(base_path, 'icons', 'keebfire.png')
         if os.path.exists(icon_path):
-            self.icon_path = icon_path
-            print(f"Icon file found: {icon_path}")
-        else:
-            print(f"Icon file not found: {icon_path}")
-            self.icon_path = None
+            return icon_path
+        return None
 
     def set_window_icon(self, window):
-        print(f"Attempting to set icon for {window.title()}")
-        print(f"Icon path: {self.icon_path}")
-        print(f"Window object: {window}")
-        
-        if self.icon_path and window:
+        if self.icon_path:
             try:
-                if platform.system() == "Windows":
-                    # For Windows, use different methods for ICO and other formats
-                    if self.icon_path.lower().endswith('.ico'):
-                        print("Using wm_iconbitmap for .ico file")
-                        window.wm_iconbitmap(self.icon_path)
-                        # Try an alternative method as well
-                        icon = Image.open(self.icon_path)
-                        icon = ImageTk.PhotoImage(icon)
-                        window.iconphoto(True, icon)
-                    else:
-                        print("Using iconphoto for non-ico file")
-                        icon = Image.open(self.icon_path)
-                        icon = ImageTk.PhotoImage(icon)
-                        window.iconphoto(True, icon)
-                else:  # Linux
-                    print("Using iconphoto for Linux")
-                    icon = Image.open(self.icon_path)
-                    icon = ImageTk.PhotoImage(icon)
-                    window.iconphoto(True, icon)
+                icon = PhotoImage(file=self.icon_path)
+                window.iconphoto(True, icon)
                 print(f"Icon set successfully for {window.title()}")
             except Exception as e:
-                print(f"Error setting icon for {window.title()}: {e}")
-                print(f"Exception type: {type(e)}")
-                print(f"Exception args: {e.args}")
+                print(f"Error setting icon: {e}")
         else:
-            print(f"No icon path set or window is None, skipping icon setup for {window.title() if window else 'unknown window'}")
+            print("Icon file not found.")
 
     def on_action(self, action_type):
         current_time = time.time()

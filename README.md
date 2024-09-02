@@ -18,42 +18,19 @@ APM Tracker is a Python application that measures and displays Actions Per Minut
 - Python 3.12.5 or higher
 - Required Python packages are listed in `requirements.txt`
 
-## Project Structure
-
-```
-apm_tracker/
-│
-├── main.py
-├── tracker.py
-├── gui/
-│   ├── __init__.py
-│   ├── main_window.py
-│   ├── mini_window.py
-│   ├── graph_frame.py
-│   └── settings_frame.py
-├── utils/
-│   ├── __init__.py
-│   ├── input_listener.py
-│   ├── icon_loader.py
-│   └── settings_manager.py
-└── icons/
-    ├── keebfire.ico
-    └── keebfire.png
-```
-
 ## Installation
 
 1. Clone this repository or download the source code.
 2. Install the required packages:
 
-   ```
+   ```sh
    pip install -r requirements.txt
    ```
 
 3. Run the script:
 
-   ```
-   python main.py
+   ```sh
+   python apm.py
    ```
 
 ## Building the Application
@@ -61,12 +38,12 @@ apm_tracker/
 To create a standalone executable:
 
 1. Ensure you have PyInstaller installed:
-   ```
+   ```sh
    pip install pyinstaller
    ```
 
 2. Run PyInstaller:
-   ```
+   ```sh
    pyinstaller --name=APMTracker --windowed --add-data "icons:icons" --icon=icons/keebfire.ico main.py
    ```
 

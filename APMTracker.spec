@@ -5,7 +5,7 @@ a = Analysis(
     ['apm.py'],
     pathex=[],
     binaries=[],
-    datas=[('icons\\\\keebfire.ico', '.'), ('icons\\\\keebfire.png', '.')],
+    datas=[('icons', 'icons')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
