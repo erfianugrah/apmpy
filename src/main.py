@@ -1,6 +1,7 @@
 import logging
 import traceback
 from tracker import APMTracker
+from utils.constants import LOG_LEVELS
 
 if __name__ == "__main__":
     tracker = APMTracker()

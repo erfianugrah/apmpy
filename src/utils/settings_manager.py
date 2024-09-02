@@ -1,6 +1,6 @@
 import json
 import logging
-from utils import update_window_list
+from utils.window_utils import update_window_list
 
 class SettingsManager:
     def __init__(self):

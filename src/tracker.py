@@ -1,10 +1,11 @@
 import threading
 import logging
 import traceback
-from gui_manager import GUIManager
-from input_manager import InputManager
-from data_manager import DataManager
-from settings_manager import SettingsManager
+from gui.gui_manager import GUIManager
+from utils.input_manager import InputManager
+from utils.data_manager import DataManager
+from utils.settings_manager import SettingsManager
+from utils.constants import DEFAULT_UPDATE_INTERVAL
 
 class APMTracker:
     def __init__(self):
