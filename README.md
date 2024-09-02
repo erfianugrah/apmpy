@@ -187,6 +187,9 @@ To create a standalone executable:
 ### Graphs
 ![graph](./screenshots/apm_graph.png)
 
+## Demo
+![apm_gif](./screenshots/demo.gif)
+
 ## Contributing
 
 Contributions to improve the APM Tracker are welcome. Please feel free to submit pull requests or open issues to suggest improvements or report bugs.
