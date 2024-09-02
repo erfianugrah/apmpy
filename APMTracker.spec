@@ -5,7 +5,7 @@ a = Analysis(
     ['apm.py'],
     pathex=[],
     binaries=[],
-    datas=[('C:\\Users\\erfia\\AppData\\Roaming\\Python\\Python312\\site-packages\\matplotlib', 'matplotlib'), ('icons\\keebfire.ico', '.'), ('icons\\keebfire.png', '.')],
+    datas=[('icons\\\\keebfire.ico', '.'), ('icons\\\\keebfire.png', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
