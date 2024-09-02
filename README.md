@@ -18,14 +18,26 @@ APM Tracker is a Python application that measures and displays Actions Per Minut
 The project is organized into several modules for better maintainability:
 ```ascii
 apmpy/
-|-- src/                    # Source code directory
-|   |-- main.py              # Entry point of the application
-|   |-- tracker.py           # Contains the main APMTracker class
-|   |-- gui_manager.py       # Manages the graphical user interface
-|   |-- input_manager.py     # Handles keyboard and mouse input
-|   |-- data_manager.py      # Manages data collection and calculations
-|   |-- settings_manager.py  # Handles application settings
-|   `-- utils.py             # Contains utility functions
+│
+├── gui/
+│   ├── init.py
+│   ├── gui_manager.py
+│   ├── main_frame.py
+│   ├── graph_frame.py
+│   ├── settings_frame.py
+│   └── mini_window.py
+│
+├── utils/
+│   ├── init.py
+│   ├── input_manager.py
+│   ├── data_manager.py
+│   ├── settings_manager.py
+│   ├── constants.py
+│   ├── window_utils.py
+│   └── icon_utils.py
+│
+├── main.py
+└── tracker.py
 |
 |-- icons/                 # Application icons
 |   |-- keebfire.ico
@@ -38,8 +50,6 @@ apmpy/
 |   `-- obs_mini_window.png
 |
 |-- apm.py                 # Main script (possibly for backward compatibility)
-|-- APMTracker.spec        # PyInstaller specification file
-|-- convert_jpg.js         # Script for image conversion
 |-- LICENSE                # License file
 |-- README.md              # Project documentation
 |-- requirements.txt       # Python package dependencies

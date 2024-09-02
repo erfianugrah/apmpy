@@ -13,7 +13,7 @@ def get_icon_path():
         # If the application is run in a normal Python environment
         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
-    icon_path = os.path.join(base_path, '../icons', 'keebfire.png')
+    icon_path = os.path.join(base_path, 'icons', 'keebfire.png')
     return icon_path if os.path.exists(icon_path) else None
 
 def set_window_icon(window, icon_path):
