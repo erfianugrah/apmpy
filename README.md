@@ -13,6 +13,40 @@ APM Tracker is a Python application that measures and displays Actions Per Minut
 - Adjustable transparency
 - Hotkeys for quick access to features
 
+## How It Works
+
+### APM (Actions Per Minute)
+APM measures the total number of actions (keyboard presses and mouse clicks) performed by the user in one minute. The application counts these actions and calculates the APM in real-time, updating every second. 
+
+- Each keystroke or mouse click is considered an action.
+- There's a 50ms cooldown between actions to prevent multiple counts for a single intended action (e.g., key held down).
+- The APM is calculated based on the actions performed in the last 60 seconds.
+
+### eAPM (effective Actions Per Minute)
+eAPM is a more refined metric that attempts to measure meaningful actions, filtering out repetitive or less significant inputs. The calculation of eAPM follows these rules:
+
+- There's a 500ms cooldown between effective actions.
+- An action is only considered effective if it's different from the previous action type.
+- Mouse movements (for selections) are counted as effective actions if they're not immediately preceded by another selection action.
+
+### Graphs
+The application provides a real-time graph of APM and eAPM:
+
+- The x-axis represents the last 60 seconds, with 0 being the current moment and 60 being a minute ago.
+- The y-axis shows the number of actions performed in each second.
+- Blue bars represent APM, while green bars represent eAPM.
+- The graph updates every second, providing a rolling view of your recent action frequency.
+
+### Target Program Functionality
+The target program feature allows you to focus APM tracking on a specific application:
+
+1. In the Settings tab, click "Set Target Program" while the desired application is in focus.
+2. The name of the active window will be set as the target program.
+3. APM tracking will only occur when the target program is the active window.
+4. To track all programs again, click "Clear Target Program".
+
+Note: The effectiveness of this feature may vary depending on your operating system and the specific application you're targeting.
+
 ## Requirements
 
 - Python 3.12.5 or higher

@@ -15,9 +15,15 @@ from collections import deque
 import platform
 import win32gui
 import win32con
+import win32process
 from pynput import keyboard, mouse
 from PIL import Image, ImageTk
+import logging
+import traceback
 
+# Set up logging
+logging.basicConfig(filename='apm_tracker.log', level=logging.DEBUG,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 class APMTracker:
     def __init__(self):
         self.actions = deque(maxlen=3600)  # Store actions for the last hour
@@ -39,7 +45,15 @@ class APMTracker:
         self.input_event = threading.Event()
         self.root = None
         self.mini_window = None
-        self.icon_path = self.get_icon_path()
+        self.icon_path = self.get_icon_path()        
+        self.window_list = []
+        self.window_list = []
+
+        try:
+            self.update_window_list()
+        except Exception as e:
+            logging.error(f"Error initializing window list: {str(e)}")
+            logging.debug(traceback.format_exc())
 
     def get_icon_path(self):
         base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
@@ -60,21 +74,30 @@ class APMTracker:
             print("Icon file not found.")
 
     def on_action(self, action_type):
-        current_time = time.time()
+        try:
+            current_time = time.time()
 
-        if self.target_program:
-            try:
-                if platform.system() == 'Windows':
-                    hwnd = win32gui.GetForegroundWindow()
-                    _, pid = win32process.GetWindowThreadProcessId(hwnd)
-                    active_window = psutil.Process(pid).name().lower()
-                else:
-                    active_window = psutil.Process(os.getpid()).name().lower()
-                
-                if active_window != self.target_program:
+            if self.target_program:
+                try:
+                    if platform.system() == 'Windows':
+                        import win32gui
+                        hwnd = win32gui.GetForegroundWindow()
+                        active_window = win32gui.GetWindowText(hwnd).lower()
+                    else:
+                        active_window = os.popen('xdotool getwindowfocus getwindowname').read().strip().lower()
+                    
+                    if active_window != self.target_program:
+                        return
+                except Exception as e:
+                    logging.error(f"Error checking active window: {str(e)}")
+                    logging.debug(traceback.format_exc())
                     return
-            except Exception:
-                return
+
+            # Rest of the method remains the same
+            # ... (previous on_action code)
+        except Exception as e:
+            logging.error(f"Error in on_action: {str(e)}")
+            logging.debug(traceback.format_exc())
 
         # APM calculation (only keystrokes and mouse clicks)
         if action_type in ['keyboard', 'mouse_click']:
@@ -236,16 +259,22 @@ class APMTracker:
         )
 
     def setup_settings_frame(self):
-        ttk.Label(self.settings_frame, text="Transparency:").pack(pady=5)
-        self.transparency_scale = ttk.Scale(self.settings_frame, from_=0.1, to=1.0, orient=tk.HORIZONTAL, command=self.update_transparency)
-        self.transparency_scale.set(1.0)
-        self.transparency_scale.pack(pady=5)
+        try:
+            ttk.Label(self.settings_frame, text="Transparency:").pack(pady=5)
+            self.transparency_scale = ttk.Scale(self.settings_frame, from_=0.1, to=1.0, orient=tk.HORIZONTAL, command=self.update_transparency)
+            self.transparency_scale.set(1.0)
+            self.transparency_scale.pack(pady=5)
 
-        ttk.Label(self.settings_frame, text="Target Program:").pack(pady=5)
-        self.target_program_entry = ttk.Entry(self.settings_frame)
-        self.target_program_entry.pack(pady=5)
-        ttk.Button(self.settings_frame, text="Set Target Program", command=self.set_target_program).pack(pady=5)
-        ttk.Button(self.settings_frame, text="Clear Target Program", command=self.clear_target_program).pack(pady=5)
+            ttk.Label(self.settings_frame, text="Target Program:").pack(pady=5)
+            self.target_program_combobox = ttk.Combobox(self.settings_frame, values=self.window_list)
+            self.target_program_combobox.pack(pady=5)
+            ttk.Button(self.settings_frame, text="Set Target Program", command=self.set_target_program).pack(pady=5)
+            ttk.Button(self.settings_frame, text="Clear Target Program", command=self.clear_target_program).pack(pady=5)
+            ttk.Button(self.settings_frame, text="Refresh Window List", command=self.update_window_list).pack(pady=5)
+        except Exception as e:
+            logging.error(f"Error setting up settings frame: {str(e)}")
+            logging.debug(traceback.format_exc())
+            raise
 
     def update_transparency(self, value):
         alpha = float(value)
@@ -254,21 +283,47 @@ class APMTracker:
         if self.mini_window:
             self.mini_window.attributes('-alpha', alpha)
 
+    def update_window_list(self):
+        try:
+            self.window_list.clear()
+            if platform.system() == 'Windows':
+                import win32gui
+                def enum_window_callback(hwnd, window_list):
+                    if win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowText(hwnd):
+                        window_list.append(win32gui.GetWindowText(hwnd))
+                win32gui.EnumWindows(enum_window_callback, self.window_list)
+            else:
+                # For non-Windows systems
+                self.window_list = os.popen("wmctrl -l | awk '{$1=$2=$3=""; print $0}'").read().splitlines()
+
+            # Update the combobox values
+            if hasattr(self, 'target_program_combobox'):
+                self.target_program_combobox['values'] = self.window_list
+            logging.info(f"Updated window list with {len(self.window_list)} items")
+        except Exception as e:
+            logging.error(f"Error updating window list: {str(e)}")
+            logging.debug(traceback.format_exc())
+
     def set_target_program(self):
-        if platform.system() == 'Windows':
-            hwnd = win32gui.GetForegroundWindow()
-            _, pid = win32process.GetWindowThreadProcessId(hwnd)
-            active_window = psutil.Process(pid).name()
-        else:
-            active_window = psutil.Process(os.getpid()).name()
-        
-        self.target_program_entry.delete(0, tk.END)
-        self.target_program_entry.insert(0, active_window.lower())
-        self.target_program = active_window.lower()
+        try:
+            selected_window = self.target_program_combobox.get()
+            if selected_window:
+                self.target_program = selected_window.lower()
+                logging.info(f"Target program set to: {self.target_program}")
+            else:
+                logging.warning("No window selected")
+        except Exception as e:
+            logging.error(f"Error setting target program: {str(e)}")
+            logging.debug(traceback.format_exc())
 
     def clear_target_program(self):
-        self.target_program = ""
-        self.target_program_entry.delete(0, tk.END)
+        try:
+            self.target_program = ""
+            self.target_program_combobox.set('')
+            logging.info("Target program cleared")
+        except Exception as e:
+            logging.error(f"Error clearing target program: {str(e)}")
+            logging.debug(traceback.format_exc())
 
     def save_settings(self):
         settings = {
@@ -442,18 +497,28 @@ class APMTracker:
         self.root.quit()
 
     def run(self):
-        self.setup_gui()
-        self.load_settings()
-        self.input_thread = threading.Thread(target=self.input_loop, daemon=True)
-        self.input_thread.start()
-        self.update_gui()
-        if self.mini_window:
-            self.mini_window.withdraw()  # Ensure the mini-view is hidden before starting the main loop
-        if self.root:
-            self.root.mainloop()
-        else:
-            print("Error: Main window (root) is not initialized.")
+        try:
+            self.setup_gui()
+            self.load_settings()
+            self.input_thread = threading.Thread(target=self.input_loop, daemon=True)
+            self.input_thread.start()
+            self.update_gui()
+            if self.mini_window:
+                self.mini_window.withdraw()
+            if self.root:
+                self.root.mainloop()
+            else:
+                logging.error("Error: Main window (root) is not initialized.")
+        except Exception as e:
+            logging.error(f"Error in run method: {str(e)}")
+            logging.debug(traceback.format_exc())
+            raise
 
 if __name__ == "__main__":
-    tracker = APMTracker()
-    tracker.run()
+    try:
+        tracker = APMTracker()
+        tracker.run()
+    except Exception as e:
+        logging.critical(f"Critical error in main: {str(e)}")
+        logging.debug(traceback.format_exc())
+        print(f"A critical error occurred. Please check the log file for details: {str(e)}")
