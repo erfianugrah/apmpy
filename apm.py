@@ -41,7 +41,6 @@ class APMTracker:
         self.mini_window = None
         self.icon_path = self.get_icon_path()
 
-
     def get_icon_path(self):
         base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
         icon_path = os.path.join(base_path, 'icons', 'keebfire.png')

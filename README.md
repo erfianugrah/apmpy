@@ -59,6 +59,17 @@ To create a standalone executable:
 - Use the "Toggle Mini View" button to switch between full view and mini view.
 - Press Ctrl+Shift+Q to quit the application.
 
+## Screenshots
+
+### Main Window
+![main_window](./apm_main_window.png)
+
+### Mini Window
+![mini_window](./obs_mini_window.png)
+
+### Graphs
+![graph](./apm_graph.png)
+
 ## Contributing
 
 Contributions to improve the APM Tracker are welcome. Please feel free to submit pull requests or open issues to suggest improvements or report bugs.
