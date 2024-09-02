@@ -32,7 +32,7 @@ jobs:
             Write-Error "Failed to find matplotlib path"
             exit 1
           }
-          pyinstaller --onefile --noconsole --add-data "$MatplotlibPath;matplotlib" --add-data "icons/keebfire.ico;." --add-data "icons/keebfire.png;." --icon="icons/keebfire.ico" --name="APMTracker" apm.py
+          pyinstaller --onefile --noconsole --add-data "$MatplotlibPath;matplotlib" --add-data "icons:icons" --icon="icons/keebfire.ico" --name="APMTracker" apm.py
         shell: pwsh
 
       - name: Verify executable name
@@ -75,7 +75,7 @@ jobs:
       - name: Build Linux Executable
         run: |
           MatplotlibPath=$(python -c "import matplotlib; import os; print(os.path.dirname(matplotlib.__file__))")
-          pyinstaller --onefile --add-data "$MatplotlibPath:matplotlib" --add-data "icons/keebfire.ico:." --add-data "icons/keebfire.png:." --icon="icons/keebfire.png" --name="APMTracker" apm.py
+          pyinstaller --onefile --add-data "$MatplotlibPath:matplotlib" --add-data "icons/keebfire.ico:." --add-data "icons:icons" --icon="icons/keebfire.png" --name="APMTracker" apm.py
 
       - name: Verify executable name
         run: |
