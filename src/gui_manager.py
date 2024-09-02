@@ -7,6 +7,7 @@ import matplotlib.animation as animation
 import logging
 from utils import get_icon_path, set_window_icon, set_appwindow
 import platform
+import numpy as np
 
 class GUIManager:
     def __init__(self, tracker):
@@ -19,6 +20,7 @@ class GUIManager:
         self.bg_color = '#F5F5F5'
         self.icon_path = get_icon_path()
         self.update_interval = 500
+        self.max_actions_per_second = 10  # Maximum actions per second to display
 
     def setup_gui(self):
         self.root = tk.Tk()
@@ -104,8 +106,8 @@ class GUIManager:
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-        self.apm_data = [0] * 60
-        self.eapm_data = [0] * 60
+        self.apm_data = np.zeros(60)
+        self.eapm_data = np.zeros(60)
 
         x = range(60)
         self.apm_bars = self.ax.bar(x, self.apm_data, color='blue', alpha=0.5, label='APM')
@@ -116,15 +118,18 @@ class GUIManager:
         self.ax.set_xlabel('Time (seconds ago)')
         self.ax.set_ylabel('Number of Actions')
         
+        # Set fixed x and y axes
         self.ax.set_xlim(59, 0)
+        self.ax.set_ylim(0, self.max_actions_per_second)
         self.ax.set_xticks([0, 15, 30, 45, 59])
         self.ax.set_xticklabels(['0', '15', '30', '45', '60'])
+        self.ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True, nbins=5))
 
         self.ani = animation.FuncAnimation(
             self.figure, 
             self.update_graph, 
             interval=1000, 
-            blit=False, 
+            blit=True, 
             save_count=100
         )
 
@@ -132,19 +137,36 @@ class GUIManager:
         try:
             ttk.Label(self.settings_frame, text="Transparency:").pack(pady=5)
             self.transparency_scale = ttk.Scale(self.settings_frame, from_=0.1, to=1.0, orient=tk.HORIZONTAL, command=self.update_transparency)
-            self.transparency_scale.set(1.0)
+            self.transparency_scale.set(self.tracker.settings_manager.transparency)
             self.transparency_scale.pack(pady=5)
 
             ttk.Label(self.settings_frame, text="Target Program:").pack(pady=5)
             self.target_program_combobox = ttk.Combobox(self.settings_frame, values=self.tracker.settings_manager.window_list)
+            self.target_program_combobox.set(self.tracker.settings_manager.target_program)
             self.target_program_combobox.pack(pady=5)
             ttk.Button(self.settings_frame, text="Set Target Program", command=self.set_target_program).pack(pady=5)
             ttk.Button(self.settings_frame, text="Clear Target Program", command=self.clear_target_program).pack(pady=5)
             ttk.Button(self.settings_frame, text="Refresh Window List", command=self.refresh_window_list).pack(pady=5)
+
+            ttk.Label(self.settings_frame, text="Log Level:").pack(pady=5)
+            self.log_level_combobox = ttk.Combobox(self.settings_frame, 
+                values=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
+            self.log_level_combobox.set(logging.getLevelName(self.tracker.settings_manager.log_level))
+            self.log_level_combobox.pack(pady=5)
+            ttk.Button(self.settings_frame, text="Set Log Level", command=self.set_log_level).pack(pady=5)
+
         except Exception as e:
             logging.error(f"Error setting up settings frame: {str(e)}")
             logging.debug(traceback.format_exc())
             raise
+
+    def set_log_level(self):
+        selected_level = self.log_level_combobox.get()
+        if selected_level:
+            self.tracker.settings_manager.set_log_level(selected_level)
+            logging.info(f"Log level set to: {selected_level}")
+        else:
+            logging.warning("No log level selected")
 
     def update_transparency(self, value):
         alpha = float(value)
@@ -197,28 +219,30 @@ class GUIManager:
 
     def update_graph(self, frame):
         current_time = self.tracker.data_manager.current_time()
-        apm_data = [0] * 60
-        eapm_data = [0] * 60
+        new_apm_data = np.zeros(60)
+        new_eapm_data = np.zeros(60)
 
         for t in self.tracker.data_manager.actions:
             if current_time - t <= 60:
                 index = int(current_time - t)
                 if index < 60:
-                    apm_data[index] += 1
+                    new_apm_data[index] += 1
 
         for t in self.tracker.data_manager.effective_actions:
             if current_time - t <= 60:
                 index = int(current_time - t)
                 if index < 60:
-                    eapm_data[index] += 1
+                    new_eapm_data[index] += 1
 
-        for rect, h in zip(self.apm_bars, apm_data):
-            rect.set_height(h)
-        for rect, h in zip(self.eapm_bars, eapm_data):
-            rect.set_height(h)
+        # Clip the data to the maximum value
+        np.clip(new_apm_data, 0, self.max_actions_per_second, out=new_apm_data)
+        np.clip(new_eapm_data, 0, self.max_actions_per_second, out=new_eapm_data)
 
-        self.ax.relim()
-        self.ax.autoscale_view()
+        # Update bar heights
+        for rect, h in zip(self.apm_bars, new_apm_data):
+            rect.set_height(h)
+        for rect, h in zip(self.eapm_bars, new_eapm_data):
+            rect.set_height(h)
 
         return self.apm_bars + self.eapm_bars
 

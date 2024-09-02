@@ -2,13 +2,15 @@ import logging
 import traceback
 from tracker import APMTracker
 
-# Set up logging
-logging.basicConfig(filename='apm_tracker.log', level=logging.DEBUG,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
-
 if __name__ == "__main__":
+    tracker = APMTracker()
+    tracker.settings_manager.load_settings()
+
+    # Set up logging based on user settings
+    logging.basicConfig(filename='apm_tracker.log', level=tracker.settings_manager.log_level,
+                        format='%(asctime)s - %(levelname)s - %(message)s')
+
     try:
-        tracker = APMTracker()
         tracker.run()
     except Exception as e:
         logging.critical(f"Critical error in main: {str(e)}")
