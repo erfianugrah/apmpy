@@ -28,7 +28,7 @@ jobs:
             exit 1
           }
           pyinstaller --onefile --noconsole --add-data "$MatplotlibPath;matplotlib" --add-data "icons:icons" --icon="icons/keebfire.ico" --name="APMTracker" src/main.py
-          shell: pwsh
+        shell: pwsh
       - name: Verify executable
         run: |
           if (Test-Path dist/APMTracker.exe) {
