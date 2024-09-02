@@ -16,12 +16,30 @@ APM Tracker is a Python application that measures and displays Actions Per Minut
 ## Requirements
 
 - Python 3.12.5 or higher
-- Required Python packages:
-  - keyboard
-  - mouse
-  - psutil
-  - matplotlib
-  - pywin32 (for Windows users)
+- Required Python packages are listed in `requirements.txt`
+
+## Project Structure
+
+```
+apm_tracker/
+│
+├── main.py
+├── tracker.py
+├── gui/
+│   ├── __init__.py
+│   ├── main_window.py
+│   ├── mini_window.py
+│   ├── graph_frame.py
+│   └── settings_frame.py
+├── utils/
+│   ├── __init__.py
+│   ├── input_listener.py
+│   ├── icon_loader.py
+│   └── settings_manager.py
+└── icons/
+    ├── keebfire.ico
+    └── keebfire.png
+```
 
 ## Installation
 
@@ -29,14 +47,30 @@ APM Tracker is a Python application that measures and displays Actions Per Minut
 2. Install the required packages:
 
    ```
-   pip install keyboard mouse psutil matplotlib pywin32
+   pip install -r requirements.txt
    ```
 
 3. Run the script:
 
    ```
-   python apm_tracker.py
+   python main.py
    ```
+
+## Building the Application
+
+To create a standalone executable:
+
+1. Ensure you have PyInstaller installed:
+   ```
+   pip install pyinstaller
+   ```
+
+2. Run PyInstaller:
+   ```
+   pyinstaller --name=APMTracker --windowed --add-data "icons:icons" --icon=icons/keebfire.ico main.py
+   ```
+
+3. The executable will be created in the `dist` directory.
 
 ## Usage
 
@@ -45,14 +79,8 @@ APM Tracker is a Python application that measures and displays Actions Per Minut
 - In the 'Settings' tab, you can:
   - Adjust the transparency of the window
   - Set a target program to focus APM tracking
-- Use the "Toggle Mini View" button or press Ctrl+Shift+A to switch between full view and mini view.
+- Use the "Toggle Mini View" button to switch between full view and mini view.
 - Press Ctrl+Shift+Q to quit the application.
-
-## How it works
-
-- The tracker monitors keyboard and mouse inputs to calculate APM.
-- eAPM is calculated by filtering out rapid repeated actions and considering the context of certain actions (like unit selection in RTS games).
-- The application uses a ring buffer to store recent actions, allowing for efficient calculation of current and average metrics.
 
 ## Contributing
 

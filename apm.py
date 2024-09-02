@@ -14,7 +14,6 @@ from collections import deque
 import platform
 import win32gui
 import win32con
-import win32process
 from pynput import keyboard, mouse
 from PIL import Image, ImageTk
 
@@ -67,23 +66,36 @@ class APMTracker:
             self.icon_path = None
 
     def set_window_icon(self, window):
+        print(f"Attempting to set icon for {window.title()}")
+        print(f"Icon path: {self.icon_path}")
+        print(f"Window object: {window}")
+        
         if self.icon_path and window:
             try:
                 if platform.system() == "Windows":
                     # For Windows, use different methods for ICO and other formats
                     if self.icon_path.lower().endswith('.ico'):
-                        window.iconbitmap(default=self.icon_path)
-                    else:
+                        print("Using wm_iconbitmap for .ico file")
+                        window.wm_iconbitmap(self.icon_path)
+                        # Try an alternative method as well
                         icon = Image.open(self.icon_path)
                         icon = ImageTk.PhotoImage(icon)
-                        window.iconphoto(False, icon)
+                        window.iconphoto(True, icon)
+                    else:
+                        print("Using iconphoto for non-ico file")
+                        icon = Image.open(self.icon_path)
+                        icon = ImageTk.PhotoImage(icon)
+                        window.iconphoto(True, icon)
                 else:  # Linux
+                    print("Using iconphoto for Linux")
                     icon = Image.open(self.icon_path)
                     icon = ImageTk.PhotoImage(icon)
-                    window.iconphoto(False, icon)
+                    window.iconphoto(True, icon)
                 print(f"Icon set successfully for {window.title()}")
             except Exception as e:
                 print(f"Error setting icon for {window.title()}: {e}")
+                print(f"Exception type: {type(e)}")
+                print(f"Exception args: {e.args}")
         else:
             print(f"No icon path set or window is None, skipping icon setup for {window.title() if window else 'unknown window'}")
 
@@ -133,12 +145,13 @@ class APMTracker:
 
     def setup_gui(self):
         self.root = tk.Tk()
+        self.set_window_icon(self.root)  # Set icon immediately after creating the window
         self.root.title("APM Tracker")
         self.root.geometry("600x400")
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-        # Set icon for main window
-        self.set_window_icon(self.root)
+        # Attempt to set the icon again after a short delay
+        self.root.after(100, lambda: self.set_window_icon(self.root))
 
         style = ttk.Style(self.root)
         style.theme_use('clam')  # Set a modern theme
@@ -174,6 +187,9 @@ class APMTracker:
 
         # Set icon for mini-view
         self.set_window_icon(self.mini_window)
+
+        # Attempt to set the icon again after a short delay
+        self.mini_window.after(100, lambda: self.set_window_icon(self.mini_window))
 
         # Remove window decorations but keep it detectable
         self.mini_window.overrideredirect(True)
