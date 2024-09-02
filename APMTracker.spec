@@ -5,7 +5,7 @@ a = Analysis(
     ['apm.py'],
     pathex=[],
     binaries=[],
-    datas=[('icons', 'icons')],
+    datas=[('C:\\Users\\erfia\\AppData\\Roaming\\Python\\Python312\\site-packages\\matplotlib', 'matplotlib'), ('icons', 'icons')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
