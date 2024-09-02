@@ -46,14 +46,12 @@ class DataManager:
     def calculate_current_apm(self):
         current_time = time.time()
         minute_ago = current_time - 60
-        recent_actions = [t for t in self.actions if t > minute_ago]
-        return len(recent_actions)
+        return sum(1 for t in self.actions if t > minute_ago)
 
     def calculate_current_eapm(self):
         current_time = time.time()
         minute_ago = current_time - 60
-        recent_effective_actions = [t for t in self.effective_actions if t > minute_ago]
-        return len(recent_effective_actions)
+        return sum(1 for t in self.effective_actions if t > minute_ago)
 
     def calculate_average_apm(self):
         total_actions = len(self.actions)
