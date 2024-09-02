@@ -11,9 +11,10 @@ class SettingsManager:
         self.update_interval = 500
         self.graph_update_interval = 1000
         self.graph_time_range = 60
-        self.max_actions_per_second = 10
+        self.max_actions_per_second = 50
         self.action_cooldown = 0.05
         self.eapm_cooldown = 0.5
+        self.graph_time_range_options = [30, 60, 120, 300]  # New option for preset time ranges
         self.update_window_list()
 
     def save_settings(self):
@@ -59,16 +60,23 @@ class SettingsManager:
         logging.info(f"Transparency updated to {self.transparency}")
 
     def set_target_program(self, program):
-        self.target_program = program.lower()
+        # Extract just the program name from the window title
+        program_name = program.split(' — ')[0] if ' — ' in program else program
+        self.target_program = program_name.lower()
         logging.info(f"Target program set to: {self.target_program}")
+        self.save_settings()
 
     def clear_target_program(self):
         self.target_program = ""
         logging.info("Target program cleared")
 
     def update_window_list(self):
-        self.window_list = update_window_list()
-        logging.info(f"Window list updated. {len(self.window_list)} windows found.")
+        try:
+            self.window_list = update_window_list()
+            logging.info(f"Window list updated. {len(self.window_list)} windows found.")
+        except Exception as e:
+            logging.error(f"Failed to update window list: {str(e)}")
+            self.window_list = []  # Reset to empty list on failure
 
     def set_log_level(self, level):
         self.log_level = getattr(logging, level)
@@ -82,7 +90,8 @@ class SettingsManager:
                 logging.info(f"Setting '{key}' updated to {value}")
             else:
                 logging.warning(f"Unknown setting: {key}")
-        self.save_settings()
+        self.validate_settings()  # Validate settings after update
+        self.save_settings()  # Automatically save settings after update
 
     def validate_settings(self):
         # Add any necessary validation logic here
@@ -117,3 +126,7 @@ class SettingsManager:
             'action_cooldown': self.action_cooldown,
             'eapm_cooldown': self.eapm_cooldown
         }
+    
+    def set_graph_time_range(self, index):
+        self.graph_time_range = self.graph_time_range_options[index]
+        logging.info(f"Graph time range set to {self.graph_time_range} seconds")

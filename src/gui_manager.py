@@ -133,62 +133,123 @@ class GUIManager:
 
     def setup_settings_frame(self):
         try:
-            ttk.Label(self.settings_frame, text="Transparency:").pack(pady=5)
-            self.transparency_scale = ttk.Scale(self.settings_frame, from_=0.1, to=1.0, orient=tk.HORIZONTAL, command=self.update_transparency)
+            # Create a canvas that fills the entire frame
+            canvas = tk.Canvas(self.settings_frame)
+            canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+            # Add a scrollbar to the canvas
+            scrollbar = ttk.Scrollbar(self.settings_frame, orient=tk.VERTICAL, command=canvas.yview)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+            # Configure the canvas
+            canvas.configure(yscrollcommand=scrollbar.set)
+
+            # Create another frame inside the canvas
+            inner_frame = ttk.Frame(canvas)
+
+            # Add that frame to a window in the canvas
+            canvas_window = canvas.create_window((0, 0), window=inner_frame, anchor="nw")
+
+            # Configure canvas and inner_frame
+            def configure_inner_frame(event):
+                # Update the width of the inner frame to match the canvas
+                canvas.itemconfig(canvas_window, width=event.width)
+                
+            canvas.bind('<Configure>', configure_inner_frame)
+
+            def on_frame_configure(event):
+                # Reset the scroll region to encompass the inner frame
+                canvas.configure(scrollregion=canvas.bbox("all"))
+
+            inner_frame.bind('<Configure>', on_frame_configure)
+
+            # Bind mousewheel to scrolling only when the mouse is over the canvas
+            def _on_mousewheel(event):
+                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
+            def _bind_mousewheel(event):
+                canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+            def _unbind_mousewheel(event):
+                canvas.unbind_all("<MouseWheel>")
+
+            canvas.bind('<Enter>', _bind_mousewheel)
+            canvas.bind('<Leave>', _unbind_mousewheel)
+
+            center_frame = ttk.Frame(inner_frame)
+            center_frame.pack(expand=True)
+
+            ttk.Label(center_frame, text="Transparency:").pack(pady=5, padx=10, anchor="w")
+            self.transparency_scale = ttk.Scale(center_frame, from_=0.1, to=1.0, orient=tk.HORIZONTAL, command=self.update_transparency)
             self.transparency_scale.set(self.tracker.settings_manager.transparency)
-            self.transparency_scale.pack(pady=5)
+            self.transparency_scale.pack(pady=5, padx=10, fill="x")
 
-            ttk.Label(self.settings_frame, text="Target Program:").pack(pady=5)
-            self.target_program_combobox = ttk.Combobox(self.settings_frame, values=self.tracker.settings_manager.window_list)
+            ttk.Label(center_frame, text="Target Program:").pack(pady=5, padx=10, anchor="w")
+            self.target_program_combobox = ttk.Combobox(center_frame, values=self.tracker.settings_manager.window_list)
             self.target_program_combobox.set(self.tracker.settings_manager.target_program)
-            self.target_program_combobox.pack(pady=5)
-            ttk.Button(self.settings_frame, text="Set Target Program", command=self.set_target_program).pack(pady=5)
-            ttk.Button(self.settings_frame, text="Clear Target Program", command=self.clear_target_program).pack(pady=5)
-            ttk.Button(self.settings_frame, text="Refresh Window List", command=self.refresh_window_list).pack(pady=5)
+            self.target_program_combobox.pack(pady=5, padx=10, fill="x")
+            ttk.Button(center_frame, text="Set Target Program", command=self.set_target_program).pack(pady=5, padx=10)
+            ttk.Button(center_frame, text="Clear Target Program", command=self.clear_target_program).pack(pady=5, padx=10)
+            ttk.Button(center_frame, text="Refresh Window List", command=self.refresh_window_list).pack(pady=5, padx=10)
 
-            ttk.Label(self.settings_frame, text="Log Level:").pack(pady=5)
-            self.log_level_combobox = ttk.Combobox(self.settings_frame, 
+            ttk.Label(center_frame, text="Log Level:").pack(pady=5, padx=10, anchor="w")
+            self.log_level_combobox = ttk.Combobox(center_frame, 
                 values=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
             self.log_level_combobox.set(logging.getLevelName(self.tracker.settings_manager.log_level))
-            self.log_level_combobox.pack(pady=5)
-            ttk.Button(self.settings_frame, text="Set Log Level", command=self.set_log_level).pack(pady=5)
+            self.log_level_combobox.pack(pady=5, padx=10, fill="x")
+            ttk.Button(center_frame, text="Set Log Level", command=self.set_log_level).pack(pady=5, padx=10)
 
-            ttk.Label(self.settings_frame, text="Update Interval (ms):").pack(pady=5)
-            self.update_interval_entry = ttk.Entry(self.settings_frame)
+            ttk.Label(center_frame, text="Update Interval (ms):").pack(pady=5, padx=10, anchor="w")
+            self.update_interval_entry = ttk.Entry(center_frame)
             self.update_interval_entry.insert(0, str(self.tracker.settings_manager.update_interval))
-            self.update_interval_entry.pack(pady=5)
+            self.update_interval_entry.pack(pady=5, padx=10, fill="x")
 
-            ttk.Label(self.settings_frame, text="Graph Update Interval (ms):").pack(pady=5)
-            self.graph_update_interval_entry = ttk.Entry(self.settings_frame)
+            ttk.Label(center_frame, text="Graph Update Interval (ms):").pack(pady=5, padx=10, anchor="w")
+            self.graph_update_interval_entry = ttk.Entry(center_frame)
             self.graph_update_interval_entry.insert(0, str(self.tracker.settings_manager.graph_update_interval))
-            self.graph_update_interval_entry.pack(pady=5)
+            self.graph_update_interval_entry.pack(pady=5, padx=10, fill="x")
 
-            ttk.Label(self.settings_frame, text="Graph Time Range (seconds):").pack(pady=5)
-            self.graph_time_range_entry = ttk.Entry(self.settings_frame)
-            self.graph_time_range_entry.insert(0, str(self.tracker.settings_manager.graph_time_range))
-            self.graph_time_range_entry.pack(pady=5)
+            ttk.Label(center_frame, text="Graph Time Range:").pack(pady=5, padx=10, anchor="w")
+            self.graph_time_range_var = tk.StringVar()
+            self.graph_time_range_combobox = ttk.Combobox(center_frame, 
+                textvariable=self.graph_time_range_var,
+                values=[f"{t} seconds" for t in self.tracker.settings_manager.graph_time_range_options])
+            self.graph_time_range_combobox.set(f"{self.tracker.settings_manager.graph_time_range} seconds")
+            self.graph_time_range_combobox.pack(pady=5, padx=10, fill="x")
+            self.graph_time_range_combobox.bind("<<ComboboxSelected>>", self.on_graph_time_range_change)
 
-            ttk.Label(self.settings_frame, text="Max Actions Per Second:").pack(pady=5)
-            self.max_actions_per_second_entry = ttk.Entry(self.settings_frame)
+            ttk.Label(center_frame, text="Max Actions Per Second:").pack(pady=5, padx=10, anchor="w")
+            self.max_actions_per_second_entry = ttk.Entry(center_frame)
             self.max_actions_per_second_entry.insert(0, str(self.tracker.settings_manager.max_actions_per_second))
-            self.max_actions_per_second_entry.pack(pady=5)
+            self.max_actions_per_second_entry.pack(pady=5, padx=10, fill="x")
 
-            ttk.Label(self.settings_frame, text="Action Cooldown (ms):").pack(pady=5)
-            self.action_cooldown_entry = ttk.Entry(self.settings_frame)
+            ttk.Label(center_frame, text="Action Cooldown (ms):").pack(pady=5, padx=10, anchor="w")
+            self.action_cooldown_entry = ttk.Entry(center_frame)
             self.action_cooldown_entry.insert(0, str(int(self.tracker.settings_manager.action_cooldown * 1000)))
-            self.action_cooldown_entry.pack(pady=5)
+            self.action_cooldown_entry.pack(pady=5, padx=10, fill="x")
 
-            ttk.Label(self.settings_frame, text="Effective Action Cooldown (ms):").pack(pady=5)
-            self.eaction_cooldown_entry = ttk.Entry(self.settings_frame)
+            ttk.Label(center_frame, text="Effective Action Cooldown (ms):").pack(pady=5, padx=10, anchor="w")
+            self.eaction_cooldown_entry = ttk.Entry(center_frame)
             self.eaction_cooldown_entry.insert(0, str(int(self.tracker.settings_manager.eapm_cooldown * 1000)))
-            self.eaction_cooldown_entry.pack(pady=5)
+            self.eaction_cooldown_entry.pack(pady=5, padx=10, fill="x")
 
-            ttk.Button(self.settings_frame, text="Apply Settings", command=self.apply_settings).pack(pady=10)
+            ttk.Button(center_frame, text="Apply Settings", command=self.apply_settings).pack(pady=10, padx=10)
+
+            # Update the scrollregion when all widgets are in place
+            inner_frame.update_idletasks()
+            canvas.configure(scrollregion=canvas.bbox("all"))
 
         except Exception as e:
             logging.error(f"Error setting up settings frame: {str(e)}")
             logging.debug(traceback.format_exc())
-            raise
+            raise    
+
+    def on_graph_time_range_change(self, event):
+        selected = self.graph_time_range_var.get()
+        time_range = int(selected.split()[0])
+        index = self.tracker.settings_manager.graph_time_range_options.index(time_range)
+        self.tracker.settings_manager.set_graph_time_range(index)
+        self.update_graph_settings()
 
     def update_transparency(self, value):
         alpha = float(value)
@@ -227,13 +288,12 @@ class GUIManager:
             new_settings = {
                 'update_interval': int(self.update_interval_entry.get()),
                 'graph_update_interval': int(self.graph_update_interval_entry.get()),
-                'graph_time_range': int(self.graph_time_range_entry.get()),
                 'max_actions_per_second': int(self.max_actions_per_second_entry.get()),
                 'action_cooldown': int(self.action_cooldown_entry.get()) / 1000,
                 'eapm_cooldown': int(self.eaction_cooldown_entry.get()) / 1000
             }
             self.tracker.settings_manager.update_settings(**new_settings)
-            self.update_gui_elements()
+            self.update_graph_settings()
             logging.info("Settings applied successfully")
             messagebox.showinfo("Success", "Settings applied successfully")
         except ValueError as e:
@@ -243,6 +303,28 @@ class GUIManager:
             logging.error(f"Error applying settings: {str(e)}")
             logging.debug(traceback.format_exc())
             messagebox.showerror("Error", f"An error occurred while applying settings: {str(e)}")
+
+    def update_graph_settings(self):
+        # Update graph based on new settings
+        self.ax.clear()
+        x = range(self.tracker.settings_manager.graph_time_range)
+        self.apm_data = np.zeros(self.tracker.settings_manager.graph_time_range)
+        self.eapm_data = np.zeros(self.tracker.settings_manager.graph_time_range)
+        self.apm_bars = self.ax.bar(x, self.apm_data, color='blue', alpha=0.5, label='APM')
+        self.eapm_bars = self.ax.bar(x, self.eapm_data, color='green', alpha=0.5, label='eAPM')
+
+        self.ax.legend(loc='upper left')
+        self.ax.set_title('APM and eAPM over time')
+        self.ax.set_xlabel('Time (seconds ago)')
+        self.ax.set_ylabel('Number of Actions')
+        
+        self.ax.set_xlim(self.tracker.settings_manager.graph_time_range - 1, 0)
+        self.ax.set_ylim(0, self.tracker.settings_manager.max_actions_per_second)
+        self.ax.set_xticks([0, self.tracker.settings_manager.graph_time_range // 2, self.tracker.settings_manager.graph_time_range - 1])
+        self.ax.set_xticklabels(['0', str(self.tracker.settings_manager.graph_time_range // 2), str(self.tracker.settings_manager.graph_time_range)])
+        self.ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True, nbins=5))
+
+        self.canvas.draw()
 
     def update_gui_elements(self):
         self.setup_graph_frame()
@@ -291,15 +373,22 @@ class GUIManager:
                 if index < self.tracker.settings_manager.graph_time_range:
                     new_eapm_data[index] += 1
 
-        # Clip the data to the maximum value
-        np.clip(new_apm_data, 0, self.tracker.settings_manager.max_actions_per_second, out=new_apm_data)
-        np.clip(new_eapm_data, 0, self.tracker.settings_manager.max_actions_per_second, out=new_eapm_data)
-
         # Update bar heights
         for rect, h in zip(self.apm_bars, new_apm_data):
             rect.set_height(h)
         for rect, h in zip(self.eapm_bars, new_eapm_data):
             rect.set_height(h)
+
+        # Dynamically adjust y-axis
+        max_value = max(np.max(new_apm_data), np.max(new_eapm_data))
+        y_max = min(max(max_value * 1.1, 1), self.tracker.settings_manager.max_actions_per_second)
+        self.ax.set_ylim(0, y_max)
+
+        # Update y-axis ticks
+        self.ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True, nbins=5))
+
+        # Force redraw of the figure
+        self.figure.canvas.draw()
 
         return self.apm_bars + self.eapm_bars
 
