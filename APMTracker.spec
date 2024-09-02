@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['apm.py'],
+    ['src\\main.py'],
     pathex=[],
     binaries=[],
     datas=[('C:\\Users\\erfia\\AppData\\Roaming\\Python\\Python312\\site-packages\\matplotlib', 'matplotlib'), ('icons', 'icons')],

@@ -13,6 +13,53 @@ APM Tracker is a Python application that measures and displays Actions Per Minut
 - Adjustable transparency
 - Hotkeys for quick access to features
 
+## Project Structure
+
+The project is organized into several modules for better maintainability:
+```ascii
+apmpy/
+|-- src/                    # Source code directory
+|   |-- main.py              # Entry point of the application
+|   |-- tracker.py           # Contains the main APMTracker class
+|   |-- gui_manager.py       # Manages the graphical user interface
+|   |-- input_manager.py     # Handles keyboard and mouse input
+|   |-- data_manager.py      # Manages data collection and calculations
+|   |-- settings_manager.py  # Handles application settings
+|   `-- utils.py             # Contains utility functions
+|
+|-- icons/                 # Application icons
+|   |-- keebfire.ico
+|   |-- keebfire.jpg
+|   `-- keebfire.png
+|
+|-- screenshots/           # Application screenshots
+|   |-- apm_graph.png
+|   |-- apm_main_window.png
+|   `-- obs_mini_window.png
+|
+|-- apm.py                 # Main script (possibly for backward compatibility)
+|-- APMTracker.spec        # PyInstaller specification file
+|-- convert_jpg.js         # Script for image conversion
+|-- LICENSE                # License file
+|-- README.md              # Project documentation
+|-- requirements.txt       # Python package dependencies
+```
+### Module Descriptions
+
+- `main.py`: The entry point of the application. It initializes the APMTracker and handles the main execution loop.
+
+- `tracker.py`: Contains the main `APMTracker` class, which coordinates between other modules and manages the overall application state.
+
+- `gui_manager.py`: Manages the graphical user interface. It creates and updates the main window, graph, and mini-view.
+
+- `input_manager.py`: Handles keyboard and mouse input using the `pynput` library. It detects user actions and sends them to the tracker.
+
+- `data_manager.py`: Manages data collection and calculations. It stores action data, calculates APM and eAPM, and provides methods for data analysis.
+
+- `settings_manager.py`: Handles application settings. It manages saving and loading settings, as well as the target program functionality.
+
+- `utils.py`: Contains utility functions used across the application, such as icon path resolution and window management helpers.
+
 ## How It Works
 
 ### APM (Actions Per Minute)
@@ -67,6 +114,31 @@ Note: The effectiveness of this feature may vary depending on your operating sys
    python apm.py
    ```
 
+## Running the Application
+
+### Windows
+Simply double-click the `APMTracker.exe` file to run the application.
+
+### Linux
+To run the Linux binary:
+
+1. Open a terminal in the directory containing the `APMTracker` binary.
+2. Make the file executable (if it's not already):
+   ```sh
+   chmod +x APMTracker
+   ```
+3. Run the application:
+   ```sh
+   ./APMTracker
+   ```
+
+Note: If you encounter a "permission denied" error, you may need to run the following command:
+```sh
+sudo chown $USER:$USER APMTracker
+```
+
+If you're using a desktop environment, you might be able to double-click the file to run it, depending on your system settings.
+
 ## Building the Application
 
 To create a standalone executable:
@@ -96,13 +168,13 @@ To create a standalone executable:
 ## Screenshots
 
 ### Main Window
-![main_window](./apm_main_window.png)
+![main_window](./screenshots/apm_main_window.png)
 
 ### Mini Window
-![mini_window](./obs_mini_window.png)
+![mini_window](./screenshots/obs_mini_window.png)
 
 ### Graphs
-![graph](./apm_graph.png)
+![graph](./screenshots/apm_graph.png)
 
 ## Contributing
 
