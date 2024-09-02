@@ -27,7 +27,7 @@ jobs:
             Write-Error "Failed to find matplotlib path"
             exit 1
           }
-          pyinstaller --onefile --noconsole --add-data "$MatplotlibPath;matplotlib" --add-data "icons:icons" --icon="icons/keebfire.ico" --name="APMTracker" src/main.py
+          pyinstaller --onefile --noconsole --add-data "$MatplotlibPath;matplotlib" --add-data "icons;icons" --icon="icons/keebfire.ico" --name="APMTracker" src/main.py
         shell: pwsh
       - name: Verify executable
         run: |
