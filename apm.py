@@ -9,11 +9,12 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.animation as animation
 import os
+import sys
 from collections import deque
 import platform
 import win32gui
 import win32con
-import win32api
+import win32process
 from pynput import keyboard, mouse
 from PIL import Image, ImageTk
 
@@ -36,23 +37,55 @@ class APMTracker:
         self.bg_color = '#F5F5F5'  # Off-white background color
         self.last_mini_size = (0, 0)  # Store last mini-view size
         self.input_event = threading.Event()
-        self.icon_image = None  # We'll store the PhotoImage object here
+        self.root = None
+        self.mini_window = None
+        self.load_icon()
+
 
     def load_icon(self):
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            # Running as compiled executable
+            base_path = sys._MEIPASS
+        else:
+            # Running in a normal Python environment
+            base_path = os.path.dirname(os.path.abspath(__file__))
+
+        # Define the icons directory
+        icons_dir = os.path.join(base_path, 'icons')
+
         if platform.system() == "Windows":
-            icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'icons', 'keebfire.ico'))
+            icon_path = os.path.join(icons_dir, 'keebfire.ico')
         else:  # Linux
-            icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'icons', 'keebfire.png'))
-        
+            icon_path = os.path.join(icons_dir, 'keebfire.png')
+
         print(f"Attempting to load icon from: {icon_path}")
         if os.path.exists(icon_path):
-            if platform.system() == "Windows":
-                self.icon_path = icon_path
-            else:  # Linux
-                self.icon_image = tk.PhotoImage(file=icon_path)
+            self.icon_path = icon_path
             print(f"Icon file found: {icon_path}")
         else:
             print(f"Icon file not found: {icon_path}")
+            self.icon_path = None
+
+    def set_window_icon(self, window):
+        if self.icon_path and window:
+            try:
+                if platform.system() == "Windows":
+                    # For Windows, use different methods for ICO and other formats
+                    if self.icon_path.lower().endswith('.ico'):
+                        window.iconbitmap(default=self.icon_path)
+                    else:
+                        icon = Image.open(self.icon_path)
+                        icon = ImageTk.PhotoImage(icon)
+                        window.iconphoto(False, icon)
+                else:  # Linux
+                    icon = Image.open(self.icon_path)
+                    icon = ImageTk.PhotoImage(icon)
+                    window.iconphoto(False, icon)
+                print(f"Icon set successfully for {window.title()}")
+            except Exception as e:
+                print(f"Error setting icon for {window.title()}: {e}")
+        else:
+            print(f"No icon path set or window is None, skipping icon setup for {window.title() if window else 'unknown window'}")
 
     def on_action(self, action_type):
         current_time = time.time()
@@ -104,22 +137,8 @@ class APMTracker:
         self.root.geometry("600x400")
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-        # Load and set the icon
-        self.load_icon()
-        if platform.system() == "Windows" and hasattr(self, 'icon_path'):
-            try:
-                self.root.iconbitmap(self.icon_path)
-                print("Icon set successfully for main window (Windows)")
-            except tk.TclError as e:
-                print(f"Error setting icon: {e}")
-        elif self.icon_image:
-            try:
-                self.root.tk.call('wm', 'iconphoto', self.root._w, self.icon_image)
-                print("Icon set successfully for main window (Linux)")
-            except tk.TclError as e:
-                print(f"Error setting icon: {e}")
-        else:
-            print("No icon path set, skipping icon setup")
+        # Set icon for main window
+        self.set_window_icon(self.root)
 
         style = ttk.Style(self.root)
         style.theme_use('clam')  # Set a modern theme
@@ -141,7 +160,11 @@ class APMTracker:
 
         # Define custom font
         self.custom_font = tkfont.Font(family="Segoe UI", size=12)
+        
+        # Create mini-view
+        self.create_mini_window()
 
+    def create_mini_window(self):
         # Create mini-view
         self.mini_window = tk.Toplevel(self.root)
         self.mini_window.title("APM Tracker Mini")
@@ -149,21 +172,8 @@ class APMTracker:
         self.mini_window.attributes('-topmost', True)
         self.mini_window.withdraw()  # Initially hide the mini-view
 
-        # Set the icon for the mini-view as well
-        if platform.system() == "Windows" and hasattr(self, 'icon_path'):
-            try:
-                self.mini_window.iconbitmap(self.icon_path)
-                print("Icon set successfully for mini-view (Windows)")
-            except tk.TclError as e:
-                print(f"Error setting icon for mini-view: {e}")
-        elif self.icon_image:
-            try:
-                self.mini_window.tk.call('wm', 'iconphoto', self.mini_window._w, self.icon_image)
-                print("Icon set successfully for mini-view (Linux)")
-            except tk.TclError as e:
-                print(f"Error setting icon for mini-view: {e}")
-        else:
-            print("No icon path set, skipping icon setup for mini-view")
+        # Set icon for mini-view
+        self.set_window_icon(self.mini_window)
 
         # Remove window decorations but keep it detectable
         self.mini_window.overrideredirect(True)
@@ -222,14 +232,32 @@ class APMTracker:
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-        self.apm_bars = self.ax.bar(range(60), [0]*60, color='blue', alpha=0.5, label='APM')
-        self.eapm_bars = self.ax.bar(range(60), [0]*60, color='green', alpha=0.5, label='eAPM')
-        self.ax.legend(loc='upper right')
-        self.ax.set_title('APM and eAPM over time')
-        self.ax.set_xlabel('Time (seconds)')
-        self.ax.set_ylabel('Number of Actions')
+        # Initialize with 60 empty bars
+        self.apm_data = [0] * 60
+        self.eapm_data = [0] * 60
 
-        self.ani = animation.FuncAnimation(self.figure, self.update_graph, interval=1000, blit=False)
+        # Create bar containers
+        x = range(60)
+        self.apm_bars = self.ax.bar(x, self.apm_data, color='blue', alpha=0.5, label='APM')
+        self.eapm_bars = self.ax.bar(x, self.eapm_data, color='green', alpha=0.5, label='eAPM')
+
+        self.ax.legend(loc='upper left')
+        self.ax.set_title('APM and eAPM over time')
+        self.ax.set_xlabel('Time (seconds ago)')
+        self.ax.set_ylabel('Number of Actions')
+        
+        # Set x-axis to represent seconds ago, with 0 on the right
+        self.ax.set_xlim(59, 0)
+        self.ax.set_xticks([0, 15, 30, 45, 59])
+        self.ax.set_xticklabels(['0', '15', '30', '45', '60'])
+
+        self.ani = animation.FuncAnimation(
+            self.figure, 
+            self.update_graph, 
+            interval=1000, 
+            blit=False, 
+            save_count=100
+        )
 
     def setup_settings_frame(self):
         ttk.Label(self.settings_frame, text="Transparency:").pack(pady=5)
@@ -245,8 +273,10 @@ class APMTracker:
 
     def update_transparency(self, value):
         alpha = float(value)
-        self.root.attributes('-alpha', alpha)
-        self.mini_window.attributes('-alpha', alpha)
+        if self.root:
+            self.root.attributes('-alpha', alpha)
+        if self.mini_window:
+            self.mini_window.attributes('-alpha', alpha)
 
     def set_target_program(self):
         if platform.system() == 'Windows':
@@ -340,13 +370,16 @@ class APMTracker:
         for t in self.actions:
             if current_time - t <= 60:
                 index = int(current_time - t)
-                apm_data[index] += 1
+                if index < 60:
+                    apm_data[index] += 1
 
         for t in self.effective_actions:
             if current_time - t <= 60:
                 index = int(current_time - t)
-                eapm_data[index] += 1
+                if index < 60:
+                    eapm_data[index] += 1
 
+        # Update the heights of the bars
         for rect, h in zip(self.apm_bars, apm_data):
             rect.set_height(h)
         for rect, h in zip(self.eapm_bars, eapm_data):
@@ -438,8 +471,12 @@ class APMTracker:
         self.input_thread = threading.Thread(target=self.input_loop, daemon=True)
         self.input_thread.start()
         self.update_gui()
-        self.mini_window.withdraw()  # Ensure the mini-view is hidden before starting the main loop
-        self.root.mainloop()
+        if self.mini_window:
+            self.mini_window.withdraw()  # Ensure the mini-view is hidden before starting the main loop
+        if self.root:
+            self.root.mainloop()
+        else:
+            print("Error: Main window (root) is not initialized.")
 
 if __name__ == "__main__":
     tracker = APMTracker()

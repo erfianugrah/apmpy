@@ -23,7 +23,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyinstaller==6.10.0 matplotlib
+          pip install pyinstaller==6.10.0 matplotlib pillow
 
       - name: Build Windows Executable
         run: |
@@ -32,7 +32,17 @@ jobs:
             Write-Error "Failed to find matplotlib path"
             exit 1
           }
-          pyinstaller --onefile --noconsole --add-data "$MatplotlibPath;matplotlib" --add-data "icons;icons" --icon=icons/keebfire.ico apm.py
+          pyinstaller --onefile --noconsole --add-data "$MatplotlibPath;matplotlib" --add-data "icons\keebfire.ico;." --add-data "icons\keebfire.png;." --icon="icons\keebfire.ico" --name="APMTracker" apm.py
+        shell: pwsh
+
+      - name: Verify executable name
+        run: |
+          if (Test-Path dist/APMTracker.exe) {
+            Write-Host "APMTracker.exe created successfully"
+          } else {
+            Write-Error "APMTracker.exe not found in dist directory"
+            exit 1
+          }
         shell: pwsh
 
       - name: List dist directory
@@ -42,7 +52,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: apm_tracker_windows
-          path: dist/apm.exe
+          path: dist/APMTracker.exe
 
   build_linux:
     runs-on: ubuntu-latest
@@ -60,12 +70,21 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyinstaller==6.10.0 matplotlib
+          pip install pyinstaller==6.10.0 matplotlib pillow
 
       - name: Build Linux Executable
         run: |
           MatplotlibPath=$(python -c "import matplotlib; import os; print(os.path.dirname(matplotlib.__file__))")
-          pyinstaller --onefile --add-data "$MatplotlibPath:matplotlib" --add-data "icons:icons" apm.py
+          pyinstaller --onefile --add-data "$MatplotlibPath:matplotlib" --add-data "icons/keebfire.ico:." --add-data "icons/keebfire.png:." --icon="icons/keebfire.png" --name="APMTracker" apm.py
+
+      - name: Verify executable name
+        run: |
+          if [ -f "dist/APMTracker" ]; then
+            echo "APMTracker created successfully"
+          else
+            echo "APMTracker not found in dist directory"
+            exit 1
+          fi
 
       - name: List dist directory
         run: ls -l dist
@@ -74,7 +93,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: apm_tracker_linux
-          path: dist/apm
+          path: dist/APMTracker
 
   release:
     needs: [build_windows, build_linux]
@@ -101,7 +120,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            apm.exe
-            apm
+            APMTracker.exe
+            APMTracker
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
