@@ -27,7 +27,7 @@ jobs:
 
       - name: Build Windows Executable
         run: |
-          pyinstaller --name=APMTracker --windowed --add-data "icons;icons" --icon=icons/keebfire.ico --noconfirm main.py
+          pyinstaller --name=APMTracker --windowed --add-data "icons;icons" --icon=icons/keebfire.ico --noconfirm apm.py
 
       - name: Verify executable name
         run: |
@@ -65,7 +65,7 @@ jobs:
 
       - name: Build Linux Executable
         run: |
-          pyinstaller --name=APMTracker --windowed --add-data "icons:icons" --icon=icons/keebfire.png --noconfirm main.py
+          pyinstaller --name=APMTracker --windowed --add-data "icons:icons" --icon=icons/keebfire.png --noconfirm apm.py
 
       - name: Verify executable name
         run: |
