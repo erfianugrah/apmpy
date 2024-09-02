@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from tkinter import font as tkfont
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -8,6 +8,7 @@ import logging
 from utils import get_icon_path, set_window_icon, set_appwindow
 import platform
 import numpy as np
+import traceback
 
 class GUIManager:
     def __init__(self, tracker):
@@ -19,8 +20,6 @@ class GUIManager:
         self.last_mini_size = (0, 0)
         self.bg_color = '#F5F5F5'
         self.icon_path = get_icon_path()
-        self.update_interval = 500
-        self.max_actions_per_second = 10  # Maximum actions per second to display
 
     def setup_gui(self):
         self.root = tk.Tk()
@@ -106,10 +105,10 @@ class GUIManager:
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-        self.apm_data = np.zeros(60)
-        self.eapm_data = np.zeros(60)
+        self.apm_data = np.zeros(self.tracker.settings_manager.graph_time_range)
+        self.eapm_data = np.zeros(self.tracker.settings_manager.graph_time_range)
 
-        x = range(60)
+        x = range(self.tracker.settings_manager.graph_time_range)
         self.apm_bars = self.ax.bar(x, self.apm_data, color='blue', alpha=0.5, label='APM')
         self.eapm_bars = self.ax.bar(x, self.eapm_data, color='green', alpha=0.5, label='eAPM')
 
@@ -118,17 +117,16 @@ class GUIManager:
         self.ax.set_xlabel('Time (seconds ago)')
         self.ax.set_ylabel('Number of Actions')
         
-        # Set fixed x and y axes
-        self.ax.set_xlim(59, 0)
-        self.ax.set_ylim(0, self.max_actions_per_second)
-        self.ax.set_xticks([0, 15, 30, 45, 59])
-        self.ax.set_xticklabels(['0', '15', '30', '45', '60'])
+        self.ax.set_xlim(self.tracker.settings_manager.graph_time_range - 1, 0)
+        self.ax.set_ylim(0, self.tracker.settings_manager.max_actions_per_second)
+        self.ax.set_xticks([0, self.tracker.settings_manager.graph_time_range // 4, self.tracker.settings_manager.graph_time_range // 2, 3 * self.tracker.settings_manager.graph_time_range // 4, self.tracker.settings_manager.graph_time_range - 1])
+        self.ax.set_xticklabels(['0', str(self.tracker.settings_manager.graph_time_range // 4), str(self.tracker.settings_manager.graph_time_range // 2), str(3 * self.tracker.settings_manager.graph_time_range // 4), str(self.tracker.settings_manager.graph_time_range)])
         self.ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True, nbins=5))
 
         self.ani = animation.FuncAnimation(
             self.figure, 
             self.update_graph, 
-            interval=1000, 
+            interval=self.tracker.settings_manager.graph_update_interval, 
             blit=True, 
             save_count=100
         )
@@ -155,18 +153,42 @@ class GUIManager:
             self.log_level_combobox.pack(pady=5)
             ttk.Button(self.settings_frame, text="Set Log Level", command=self.set_log_level).pack(pady=5)
 
+            ttk.Label(self.settings_frame, text="Update Interval (ms):").pack(pady=5)
+            self.update_interval_entry = ttk.Entry(self.settings_frame)
+            self.update_interval_entry.insert(0, str(self.tracker.settings_manager.update_interval))
+            self.update_interval_entry.pack(pady=5)
+
+            ttk.Label(self.settings_frame, text="Graph Update Interval (ms):").pack(pady=5)
+            self.graph_update_interval_entry = ttk.Entry(self.settings_frame)
+            self.graph_update_interval_entry.insert(0, str(self.tracker.settings_manager.graph_update_interval))
+            self.graph_update_interval_entry.pack(pady=5)
+
+            ttk.Label(self.settings_frame, text="Graph Time Range (seconds):").pack(pady=5)
+            self.graph_time_range_entry = ttk.Entry(self.settings_frame)
+            self.graph_time_range_entry.insert(0, str(self.tracker.settings_manager.graph_time_range))
+            self.graph_time_range_entry.pack(pady=5)
+
+            ttk.Label(self.settings_frame, text="Max Actions Per Second:").pack(pady=5)
+            self.max_actions_per_second_entry = ttk.Entry(self.settings_frame)
+            self.max_actions_per_second_entry.insert(0, str(self.tracker.settings_manager.max_actions_per_second))
+            self.max_actions_per_second_entry.pack(pady=5)
+
+            ttk.Label(self.settings_frame, text="Action Cooldown (ms):").pack(pady=5)
+            self.action_cooldown_entry = ttk.Entry(self.settings_frame)
+            self.action_cooldown_entry.insert(0, str(int(self.tracker.settings_manager.action_cooldown * 1000)))
+            self.action_cooldown_entry.pack(pady=5)
+
+            ttk.Label(self.settings_frame, text="Effective Action Cooldown (ms):").pack(pady=5)
+            self.eaction_cooldown_entry = ttk.Entry(self.settings_frame)
+            self.eaction_cooldown_entry.insert(0, str(int(self.tracker.settings_manager.eapm_cooldown * 1000)))
+            self.eaction_cooldown_entry.pack(pady=5)
+
+            ttk.Button(self.settings_frame, text="Apply Settings", command=self.apply_settings).pack(pady=10)
+
         except Exception as e:
             logging.error(f"Error setting up settings frame: {str(e)}")
             logging.debug(traceback.format_exc())
             raise
-
-    def set_log_level(self):
-        selected_level = self.log_level_combobox.get()
-        if selected_level:
-            self.tracker.settings_manager.set_log_level(selected_level)
-            logging.info(f"Log level set to: {selected_level}")
-        else:
-            logging.warning("No log level selected")
 
     def update_transparency(self, value):
         alpha = float(value)
@@ -192,51 +214,86 @@ class GUIManager:
         self.tracker.settings_manager.update_window_list()
         self.target_program_combobox['values'] = self.tracker.settings_manager.window_list
 
+    def set_log_level(self):
+        selected_level = self.log_level_combobox.get()
+        if selected_level:
+            self.tracker.settings_manager.set_log_level(selected_level)
+            logging.info(f"Log level set to: {selected_level}")
+        else:
+            logging.warning("No log level selected")
+
+    def apply_settings(self):
+        try:
+            new_settings = {
+                'update_interval': int(self.update_interval_entry.get()),
+                'graph_update_interval': int(self.graph_update_interval_entry.get()),
+                'graph_time_range': int(self.graph_time_range_entry.get()),
+                'max_actions_per_second': int(self.max_actions_per_second_entry.get()),
+                'action_cooldown': int(self.action_cooldown_entry.get()) / 1000,
+                'eapm_cooldown': int(self.eaction_cooldown_entry.get()) / 1000
+            }
+            self.tracker.settings_manager.update_settings(**new_settings)
+            self.update_gui_elements()
+            logging.info("Settings applied successfully")
+            messagebox.showinfo("Success", "Settings applied successfully")
+        except ValueError as e:
+            logging.error(f"Invalid input in settings: {str(e)}")
+            messagebox.showerror("Error", "Please enter valid numbers for all settings.")
+        except Exception as e:
+            logging.error(f"Error applying settings: {str(e)}")
+            logging.debug(traceback.format_exc())
+            messagebox.showerror("Error", f"An error occurred while applying settings: {str(e)}")
+
+    def update_gui_elements(self):
+        self.setup_graph_frame()
+        self.root.after_cancel(self.update_job)
+        self.update_gui()
+
     def update_gui(self):
-        if not self.tracker.running:
-            return
+            if not self.tracker.running:
+                return
 
-        current_apm = self.tracker.data_manager.calculate_current_apm()
-        current_eapm = self.tracker.data_manager.calculate_current_eapm()
-        avg_apm = self.tracker.data_manager.calculate_average_apm()
-        avg_eapm = self.tracker.data_manager.calculate_average_eapm()
+            current_apm = self.tracker.data_manager.calculate_current_apm()
+            current_eapm = self.tracker.data_manager.calculate_current_eapm()
+            avg_apm = self.tracker.data_manager.calculate_average_apm()
+            avg_eapm = self.tracker.data_manager.calculate_average_eapm()
 
-        self.current_apm_var.set(f"Current APM: {current_apm}")
-        self.current_eapm_var.set(f"Current eAPM: {current_eapm}")
-        self.tracker.data_manager.peak_apm = max(self.tracker.data_manager.peak_apm, current_apm)
-        self.tracker.data_manager.peak_eapm = max(self.tracker.data_manager.peak_eapm, current_eapm)
-        self.peak_apm_var.set(f"Peak APM: {self.tracker.data_manager.peak_apm}")
-        self.peak_eapm_var.set(f"Peak eAPM: {self.tracker.data_manager.peak_eapm}")
-        self.avg_apm_var.set(f"Average APM: {avg_apm:.2f}")
-        self.avg_eapm_var.set(f"Average eAPM: {avg_eapm:.2f}")
+            self.current_apm_var.set(f"Current APM: {current_apm}")
+            self.current_eapm_var.set(f"Current eAPM: {current_eapm}")
+            self.tracker.data_manager.peak_apm = max(self.tracker.data_manager.peak_apm, current_apm)
+            self.tracker.data_manager.peak_eapm = max(self.tracker.data_manager.peak_eapm, current_eapm)
+            self.peak_apm_var.set(f"Peak APM: {self.tracker.data_manager.peak_apm}")
+            self.peak_eapm_var.set(f"Peak eAPM: {self.tracker.data_manager.peak_eapm}")
+            self.avg_apm_var.set(f"Average APM: {avg_apm:.2f}")
+            self.avg_eapm_var.set(f"Average eAPM: {avg_eapm:.2f}")
 
-        self.mini_apm_var.set(f"APM: {current_apm}")
-        self.mini_eapm_var.set(f"eAPM: {current_eapm}")
+            self.mini_apm_var.set(f"APM: {current_apm}")
+            self.mini_eapm_var.set(f"eAPM: {current_eapm}")
 
-        self.adjust_mini_view_size()
+            self.adjust_mini_view_size()
 
-        self.root.after(1000 if self.is_mini_view else self.update_interval, self.update_gui)
+            self.update_job = self.root.after(self.tracker.settings_manager.update_interval, self.update_gui)
 
     def update_graph(self, frame):
         current_time = self.tracker.data_manager.current_time()
-        new_apm_data = np.zeros(60)
-        new_eapm_data = np.zeros(60)
+        new_apm_data = np.zeros(self.tracker.settings_manager.graph_time_range)
+        new_eapm_data = np.zeros(self.tracker.settings_manager.graph_time_range)
 
         for t in self.tracker.data_manager.actions:
-            if current_time - t <= 60:
+            if current_time - t <= self.tracker.settings_manager.graph_time_range:
                 index = int(current_time - t)
-                if index < 60:
+                if index < self.tracker.settings_manager.graph_time_range:
                     new_apm_data[index] += 1
 
         for t in self.tracker.data_manager.effective_actions:
-            if current_time - t <= 60:
+            if current_time - t <= self.tracker.settings_manager.graph_time_range:
                 index = int(current_time - t)
-                if index < 60:
+                if index < self.tracker.settings_manager.graph_time_range:
                     new_eapm_data[index] += 1
 
         # Clip the data to the maximum value
-        np.clip(new_apm_data, 0, self.max_actions_per_second, out=new_apm_data)
-        np.clip(new_eapm_data, 0, self.max_actions_per_second, out=new_eapm_data)
+        np.clip(new_apm_data, 0, self.tracker.settings_manager.max_actions_per_second, out=new_apm_data)
+        np.clip(new_eapm_data, 0, self.tracker.settings_manager.max_actions_per_second, out=new_eapm_data)
 
         # Update bar heights
         for rect, h in zip(self.apm_bars, new_apm_data):
@@ -284,6 +341,7 @@ class GUIManager:
 
     def run_main_loop(self):
         if self.root:
+            self.update_gui()
             self.root.mainloop()
         else:
             logging.error("Error: Main window (root) is not initialized.")
