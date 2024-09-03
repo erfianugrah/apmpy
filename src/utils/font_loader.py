@@ -1,4 +1,3 @@
-import os
 import tkinter.font as tkFont
 import logging
 

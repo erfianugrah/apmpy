@@ -6,6 +6,10 @@ import matplotlib.animation as animation
 import numpy as np
 import os
 from matplotlib import font_manager
+from utils.constants import (
+    GRAPH_APM_COLOR, GRAPH_EAPM_COLOR, GRAPH_ALPHA, GRAPH_DPI, GRAPH_FIGSIZE,
+    FONT_FILENAME, FONT_NAME
+)
 
 class GraphFrame:
     def __init__(self, parent, tracker):
@@ -17,14 +21,14 @@ class GraphFrame:
 
     def load_custom_font(self):
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        font_path = os.path.join(base_path, 'assets', 'fonts', 'IosevkaTermNerdFont-Regular.ttf')
+        font_path = os.path.join(base_path, 'assets', 'fonts', FONT_FILENAME)
         font_manager.fontManager.addfont(font_path)
-        plt.rcParams['font.family'] = 'IosevkaTerm NF'
+        plt.rcParams['font.family'] = FONT_NAME 
 
     def setup_graph_frame(self):
         plt.rcParams['font.size'] = 10  # Base font size
 
-        self.figure, self.ax = plt.subplots(figsize=(5, 4), dpi=100)
+        self.figure, self.ax = plt.subplots(figsize=GRAPH_FIGSIZE, dpi=GRAPH_DPI)
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
@@ -33,8 +37,8 @@ class GraphFrame:
         self.eapm_data = np.zeros(self.tracker.settings_manager.graph_time_range)
 
         x = range(self.tracker.settings_manager.graph_time_range)
-        self.apm_bars = self.ax.bar(x, self.apm_data, color='blue', alpha=0.5, label='APM')
-        self.eapm_bars = self.ax.bar(x, self.eapm_data, color='green', alpha=0.5, label='eAPM')
+        self.apm_bars = self.ax.bar(x, self.apm_data, color=GRAPH_APM_COLOR, alpha=GRAPH_ALPHA, label='APM')
+        self.eapm_bars = self.ax.bar(x, self.eapm_data, color=GRAPH_EAPM_COLOR, alpha=GRAPH_ALPHA, label='eAPM')
 
         self.ax.legend(loc='upper left', fontsize=8)
         self.ax.set_title('APM and eAPM over time', fontsize=12, fontweight='bold')

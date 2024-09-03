@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import logging
 from utils.font_loader import get_font
+from utils.constants import FONT_NAME, LABEL_FONT_SIZE
 
 class SettingsFrame:
     def __init__(self, parent, tracker, custom_fonts):
@@ -65,9 +66,9 @@ class SettingsFrame:
         canvas.configure(scrollregion=canvas.bbox("all"))
 
     def create_settings_widgets(self, parent):
-        label_font = ('IosevkaTerm NF', 12)
-        entry_font = ('IosevkaTerm NF', 12)
-        button_font = ('IosevkaTerm NF', 12, 'bold')
+        label_font = (FONT_NAME, LABEL_FONT_SIZE)
+        entry_font = (FONT_NAME, LABEL_FONT_SIZE)
+        button_font = (FONT_NAME, LABEL_FONT_SIZE, 'bold')
 
         ttk.Label(parent, text="Transparency:", font=label_font).pack(pady=5, padx=10, anchor="w")
         self.transparency_scale = ttk.Scale(parent, from_=0.1, to=1.0, orient=tk.HORIZONTAL, command=self.update_transparency)

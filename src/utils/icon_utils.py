@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 from tkinter import PhotoImage
+import utils.constants
 
 def get_icon_path():
     if getattr(sys, 'frozen', False):
@@ -12,7 +13,7 @@ def get_icon_path():
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         logging.debug(f"Running as script. Base path: {base_path}")
     
-    icon_path = os.path.join(base_path, 'icons', 'keebfire.png')
+    icon_path = os.path.join(base_path, 'assets','icons', utils.constants.ICON_FILENAME)
     logging.debug(f"Constructed icon path: {icon_path}")
     
     if os.path.exists(icon_path):
