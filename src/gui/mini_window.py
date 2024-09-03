@@ -12,32 +12,52 @@ class MiniWindow:
 
     def setup_mini_window(self):
         self.window.title("APM Tracker Mini")
-        self.window.geometry("150x70")
         self.window.attributes('-topmost', True)
         self.window.withdraw()
-
         self.window.overrideredirect(True)
 
-        self.frame = tk.Frame(self.window, bg=self.tracker.gui_manager.bg_color)
+        self.frame = tk.Frame(self.window, bg='#2E3440')  # Nord theme background color
         self.frame.pack(expand=True, fill='both')
 
         self.apm_var = tk.StringVar()
         self.eapm_var = tk.StringVar()
 
-        label_font = get_font(self.custom_fonts, 12)
+        value_font = get_font(self.custom_fonts, 12, "bold")
+        label_font = get_font(self.custom_fonts, 10)
 
-        self.apm_label = tk.Label(self.frame, textvariable=self.apm_var, font=label_font, bg=self.tracker.gui_manager.bg_color)
-        self.apm_label.pack(anchor='w', padx=5, pady=2)
-        self.eapm_label = tk.Label(self.frame, textvariable=self.eapm_var, font=label_font, bg=self.tracker.gui_manager.bg_color)
-        self.eapm_label.pack(anchor='w', padx=5, pady=2)
+        # APM Value and Label
+        self.apm_frame = tk.Frame(self.frame, bg='#2E3440')
+        self.apm_frame.pack(fill='x', padx=2, pady=(2, 1))
+        self.apm_value = tk.Label(self.apm_frame, textvariable=self.apm_var, font=value_font, bg='#2E3440', fg='#88C0D0', anchor='e')
+        self.apm_value.pack(side='left')
+        tk.Label(self.apm_frame, text="APM", font=label_font, bg='#2E3440', fg='#D8DEE9').pack(side='left', padx=(1, 0))
+
+        # eAPM Value and Label
+        self.eapm_frame = tk.Frame(self.frame, bg='#2E3440')
+        self.eapm_frame.pack(fill='x', padx=2, pady=(1, 2))
+        self.eapm_value = tk.Label(self.eapm_frame, textvariable=self.eapm_var, font=value_font, bg='#2E3440', fg='#8FBCBB', anchor='e')
+        self.eapm_value.pack(side='left')
+        tk.Label(self.eapm_frame, text="eAPM", font=label_font, bg='#2E3440', fg='#D8DEE9').pack(side='left', padx=(1, 0))
 
         self.window.bind('<ButtonPress-1>', self.start_move)
         self.window.bind('<B1-Motion>', self.do_move)
         self.window.bind('<Double-Button-1>', self.tracker.gui_manager.toggle_view)
 
     def update_values(self, current_apm, current_eapm):
-        self.apm_var.set(f"APM: {current_apm}")
-        self.eapm_var.set(f"eAPM: {current_eapm}")
+        self.apm_var.set(f"{current_apm}")
+        self.eapm_var.set(f"{current_eapm}")
+        self.adjust_size()
+
+    def adjust_size(self):
+        self.window.update_idletasks()
+        width = max(self.apm_frame.winfo_reqwidth(), self.eapm_frame.winfo_reqwidth())
+        height = self.apm_frame.winfo_reqheight() + self.eapm_frame.winfo_reqheight()
+
+        # Add minimal padding
+        width += 4
+        height += 4
+
+        self.window.geometry(f"{width}x{height}")
 
     def start_move(self, event):
         self.x = event.x
@@ -52,18 +72,7 @@ class MiniWindow:
 
     def show(self):
         self.window.deiconify()
+        self.adjust_size()  # Ensure correct size when shown
 
     def hide(self):
         self.window.withdraw()
-
-    def adjust_size(self):
-        self.apm_label.update_idletasks()
-        self.eapm_label.update_idletasks()
-
-        width = max(self.apm_label.winfo_reqwidth(), self.eapm_label.winfo_reqwidth())
-        height = self.apm_label.winfo_reqheight() + self.eapm_label.winfo_reqheight()
-
-        width += 10
-        height += 10
-
-        self.window.geometry(f"{width}x{height}")

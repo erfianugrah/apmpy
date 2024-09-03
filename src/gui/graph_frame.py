@@ -4,15 +4,26 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.animation as animation
 import numpy as np
+import os
+from matplotlib import font_manager
 
 class GraphFrame:
     def __init__(self, parent, tracker):
         self.parent = parent
         self.tracker = tracker
         self.frame = ttk.Frame(parent)
+        self.load_custom_font()
         self.setup_graph_frame()
 
+    def load_custom_font(self):
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        font_path = os.path.join(base_path, 'assets', 'fonts', 'IosevkaTermNerdFont-Regular.ttf')
+        font_manager.fontManager.addfont(font_path)
+        plt.rcParams['font.family'] = 'IosevkaTerm NF'
+
     def setup_graph_frame(self):
+        plt.rcParams['font.size'] = 10  # Base font size
+
         self.figure, self.ax = plt.subplots(figsize=(5, 4), dpi=100)
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.frame)
         self.canvas.draw()
@@ -25,15 +36,15 @@ class GraphFrame:
         self.apm_bars = self.ax.bar(x, self.apm_data, color='blue', alpha=0.5, label='APM')
         self.eapm_bars = self.ax.bar(x, self.eapm_data, color='green', alpha=0.5, label='eAPM')
 
-        self.ax.legend(loc='upper left')
-        self.ax.set_title('APM and eAPM over time')
-        self.ax.set_xlabel('Time (seconds ago)')
-        self.ax.set_ylabel('Number of Actions')
+        self.ax.legend(loc='upper left', fontsize=8)
+        self.ax.set_title('APM and eAPM over time', fontsize=12, fontweight='bold')
+        self.ax.set_xlabel('Time (seconds ago)', fontsize=10)
+        self.ax.set_ylabel('Number of Actions', fontsize=10)
         
         self.ax.set_xlim(self.tracker.settings_manager.graph_time_range - 1, 0)
         self.ax.set_ylim(0, self.tracker.settings_manager.max_actions_per_second)
         self.ax.set_xticks([0, self.tracker.settings_manager.graph_time_range // 4, self.tracker.settings_manager.graph_time_range // 2, 3 * self.tracker.settings_manager.graph_time_range // 4, self.tracker.settings_manager.graph_time_range - 1])
-        self.ax.set_xticklabels(['0', str(self.tracker.settings_manager.graph_time_range // 4), str(self.tracker.settings_manager.graph_time_range // 2), str(3 * self.tracker.settings_manager.graph_time_range // 4), str(self.tracker.settings_manager.graph_time_range)])
+        self.ax.set_xticklabels(['0', str(self.tracker.settings_manager.graph_time_range // 4), str(self.tracker.settings_manager.graph_time_range // 2), str(3 * self.tracker.settings_manager.graph_time_range // 4), str(self.tracker.settings_manager.graph_time_range)], fontsize=8)
         self.ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True, nbins=5))
 
         self.ani = animation.FuncAnimation(

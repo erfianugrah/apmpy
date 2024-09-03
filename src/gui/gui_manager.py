@@ -36,7 +36,7 @@ class GUIManager:
     def setup_custom_font(self):
         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         font_path = os.path.join(base_path, 'assets', 'fonts', 'IosevkaTermNerdFont-Regular.ttf')
-        self.custom_fonts = load_custom_font(font_path, "IosevkaTerm NF", [12, 14, 20, 24])
+        self.custom_fonts = load_custom_font(font_path, "IosevkaTerm NF", [12, 14, 18, 20, 24])
 
     def setup_styles(self):
         style = ttk.Style(self.root)
@@ -53,7 +53,6 @@ class GUIManager:
         style.configure('Subtitle.TLabel', font=('IosevkaTerm NF', 14), foreground='#98c379')
         style.configure('Data.TLabel', font=('IosevkaTerm NF', 20, 'bold'), foreground='#e5c07b')
         style.configure('DataLabel.TLabel', font=('IosevkaTerm NF', 12), foreground='#abb2bf')
-
 
     def setup_notebook(self):
         self.notebook = ttk.Notebook(self.root)
@@ -106,7 +105,6 @@ class GUIManager:
                                       avg_apm, avg_eapm)
 
         self.mini_window.update_values(current_apm, current_eapm)
-        self.mini_window.adjust_size()
 
         self.update_job = self.root.after(self.tracker.settings_manager.update_interval, self.update_gui)
 
