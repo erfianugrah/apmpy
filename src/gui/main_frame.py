@@ -5,36 +5,33 @@ import os
 from utils.font_loader import load_custom_font
 
 class MainFrame:
-    def __init__(self, parent, tracker):
+    def __init__(self, parent, tracker, custom_fonts):
         self.parent = parent
         self.tracker = tracker
+        self.custom_fonts = custom_fonts
         self.frame = ttk.Frame(parent, style='MainFrame.TFrame')
-        self.setup_fonts()
         self.setup_styles()
         self.setup_main_frame()
-
-    def setup_fonts(self):        
-        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        font_path = os.path.join(base_path, 'assets', 'fonts', 'IosevkaTermNerdFont-Regular.ttf')
-        self.custom_fonts = load_custom_font(font_path, "Iosevka Term Nerd Font", [12, 14, 20, 24])
-
-    # def setup_fonts(self):
-    #     self.title_font = Font(family="IosevkaTerm NF", size=24, weight="bold")
-    #     self.subtitle_font = Font(family="IosevkaTerm NF", size=14)
-    #     self.data_font = Font(family="IosevkaTerm NF", size=20, weight="bold")
-    #     self.label_font = Font(family="IosevkaTerm NF", size=12)
-    #     self.button_font = Font(family="IosevkaTerm NF", size=12, weight="bold")
-    #
 
     def setup_styles(self):
         style = ttk.Style()
         style.configure('MainFrame.TFrame', background='#282c34')
-        style.configure('Title.TLabel', background='#282c34', foreground='#61afef', font=self.custom_fonts[24])
-        style.configure('Subtitle.TLabel', background='#282c34', foreground='#98c379', font=self.custom_fonts[14])
-        style.configure('Data.TLabel', background='#3e4451', foreground='#e5c07b', font=self.custom_fonts[20])
-        style.configure('DataLabel.TLabel', background='#3e4451', foreground='#abb2bf', font=self.custom_fonts[12])
+        style.configure('Title.TLabel', background='#282c34', foreground='#61afef', font=get_font(self.custom_fonts, 24))
+        style.configure('Subtitle.TLabel', background='#282c34', foreground='#98c379', font=get_font(self.custom_fonts, 14))
+        style.configure('Data.TLabel', background='#3e4451', foreground='#e5c07b', font=get_font(self.custom_fonts, 20))
+        style.configure('DataLabel.TLabel', background='#3e4451', foreground='#abb2bf', font=get_font(self.custom_fonts, 12))
         style.configure('DataFrame.TFrame', background='#3e4451')
-        style.configure('Toggle.TButton', font=self.custom_fonts[12])
+        style.configure('Toggle.TButton', font=get_font(self.custom_fonts, 12))
+
+    def setup_styles(self):
+        style = ttk.Style()
+        style.configure('MainFrame.TFrame', background='#282c34')
+        style.configure('Title.TLabel', background='#282c34', foreground='#61afef', font=('IosevkaTerm NF', 24, 'bold'))
+        style.configure('Subtitle.TLabel', background='#282c34', foreground='#98c379', font=('IosevkaTerm NF', 14))
+        style.configure('Data.TLabel', background='#3e4451', foreground='#e5c07b', font=('IosevkaTerm NF', 20, 'bold'))
+        style.configure('DataLabel.TLabel', background='#3e4451', foreground='#abb2bf', font=('IosevkaTerm NF', 12))
+        style.configure('DataFrame.TFrame', background='#3e4451')
+        style.configure('Toggle.TButton', font=('IosevkaTerm NF', 12, 'bold'))
 
     def setup_main_frame(self):
         self.frame.columnconfigure(0, weight=1)

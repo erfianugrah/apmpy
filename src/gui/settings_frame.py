@@ -1,11 +1,13 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import logging
+from utils.font_loader import get_font
 
 class SettingsFrame:
-    def __init__(self, parent, tracker):
+    def __init__(self, parent, tracker, custom_fonts):
         self.parent = parent
         self.tracker = tracker
+        self.custom_fonts = custom_fonts
         self.frame = ttk.Frame(parent)
         self.setup_settings_frame()
 
@@ -63,60 +65,67 @@ class SettingsFrame:
         canvas.configure(scrollregion=canvas.bbox("all"))
 
     def create_settings_widgets(self, parent):
-        ttk.Label(parent, text="Transparency:").pack(pady=5, padx=10, anchor="w")
+        label_font = ('IosevkaTerm NF', 12)
+        entry_font = ('IosevkaTerm NF', 12)
+        button_font = ('IosevkaTerm NF', 12, 'bold')
+
+        ttk.Label(parent, text="Transparency:", font=label_font).pack(pady=5, padx=10, anchor="w")
         self.transparency_scale = ttk.Scale(parent, from_=0.1, to=1.0, orient=tk.HORIZONTAL, command=self.update_transparency)
         self.transparency_scale.set(self.tracker.settings_manager.transparency)
         self.transparency_scale.pack(pady=5, padx=10, fill="x")
 
-        ttk.Label(parent, text="Target Program:").pack(pady=5, padx=10, anchor="w")
-        self.target_program_combobox = ttk.Combobox(parent, values=self.tracker.settings_manager.window_list)
+        ttk.Label(parent, text="Target Program:", font=label_font).pack(pady=5, padx=10, anchor="w")
+        self.target_program_combobox = ttk.Combobox(parent, values=self.tracker.settings_manager.window_list, font=entry_font)
         self.target_program_combobox.set(self.tracker.settings_manager.target_program)
         self.target_program_combobox.pack(pady=5, padx=10, fill="x")
-        ttk.Button(parent, text="Set Target Program", command=self.set_target_program).pack(pady=5, padx=10)
-        ttk.Button(parent, text="Clear Target Program", command=self.clear_target_program).pack(pady=5, padx=10)
-        ttk.Button(parent, text="Refresh Window List", command=self.refresh_window_list).pack(pady=5, padx=10)
+        ttk.Button(parent, text="Set Target Program", command=self.set_target_program, style='TButton').pack(pady=5, padx=10)
+        ttk.Button(parent, text="Clear Target Program", command=self.clear_target_program, style='TButton').pack(pady=5, padx=10)
+        ttk.Button(parent, text="Refresh Window List", command=self.refresh_window_list, style='TButton').pack(pady=5, padx=10)
 
-        ttk.Label(parent, text="Log Level:").pack(pady=5, padx=10, anchor="w")
+        ttk.Label(parent, text="Log Level:", font=label_font).pack(pady=5, padx=10, anchor="w")
         self.log_level_combobox = ttk.Combobox(parent, 
-            values=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
+            values=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+            font=entry_font)
         self.log_level_combobox.set(logging.getLevelName(self.tracker.settings_manager.log_level))
         self.log_level_combobox.pack(pady=5, padx=10, fill="x")
-        ttk.Button(parent, text="Set Log Level", command=self.set_log_level).pack(pady=5, padx=10)
+        ttk.Button(parent, text="Set Log Level", command=self.set_log_level, style='TButton').pack(pady=5, padx=10)
 
-        ttk.Label(parent, text="Update Interval (ms):").pack(pady=5, padx=10, anchor="w")
-        self.update_interval_entry = ttk.Entry(parent)
+        ttk.Label(parent, text="Update Interval (ms):", font=label_font).pack(pady=5, padx=10, anchor="w")
+        self.update_interval_entry = ttk.Entry(parent, font=entry_font)
         self.update_interval_entry.insert(0, str(self.tracker.settings_manager.update_interval))
         self.update_interval_entry.pack(pady=5, padx=10, fill="x")
 
-        ttk.Label(parent, text="Graph Update Interval (ms):").pack(pady=5, padx=10, anchor="w")
-        self.graph_update_interval_entry = ttk.Entry(parent)
+        ttk.Label(parent, text="Graph Update Interval (ms):", font=label_font).pack(pady=5, padx=10, anchor="w")
+        self.graph_update_interval_entry = ttk.Entry(parent, font=entry_font)
         self.graph_update_interval_entry.insert(0, str(self.tracker.settings_manager.graph_update_interval))
         self.graph_update_interval_entry.pack(pady=5, padx=10, fill="x")
 
-        ttk.Label(parent, text="Graph Time Range:").pack(pady=5, padx=10, anchor="w")
+        ttk.Label(parent, text="Graph Time Range:", font=label_font).pack(pady=5, padx=10, anchor="w")
         self.graph_time_range_var = tk.StringVar()
         self.graph_time_range_combobox = ttk.Combobox(parent, 
-            textvariable=self.graph_time_range_var,values=[f"{t} seconds" for t in self.tracker.settings_manager.graph_time_range_options])
+            textvariable=self.graph_time_range_var,
+            values=[f"{t} seconds" for t in self.tracker.settings_manager.graph_time_range_options],
+            font=entry_font)
         self.graph_time_range_combobox.set(f"{self.tracker.settings_manager.graph_time_range} seconds")
         self.graph_time_range_combobox.pack(pady=5, padx=10, fill="x")
         self.graph_time_range_combobox.bind("<<ComboboxSelected>>", self.on_graph_time_range_change)
 
-        ttk.Label(parent, text="Max Actions Per Second:").pack(pady=5, padx=10, anchor="w")
-        self.max_actions_per_second_entry = ttk.Entry(parent)
+        ttk.Label(parent, text="Max Actions Per Second:", font=label_font).pack(pady=5, padx=10, anchor="w")
+        self.max_actions_per_second_entry = ttk.Entry(parent, font=entry_font)
         self.max_actions_per_second_entry.insert(0, str(self.tracker.settings_manager.max_actions_per_second))
         self.max_actions_per_second_entry.pack(pady=5, padx=10, fill="x")
 
-        ttk.Label(parent, text="Action Cooldown (ms):").pack(pady=5, padx=10, anchor="w")
-        self.action_cooldown_entry = ttk.Entry(parent)
+        ttk.Label(parent, text="Action Cooldown (ms):", font=label_font).pack(pady=5, padx=10, anchor="w")
+        self.action_cooldown_entry = ttk.Entry(parent, font=entry_font)
         self.action_cooldown_entry.insert(0, str(int(self.tracker.settings_manager.action_cooldown * 1000)))
         self.action_cooldown_entry.pack(pady=5, padx=10, fill="x")
 
-        ttk.Label(parent, text="Effective Action Cooldown (ms):").pack(pady=5, padx=10, anchor="w")
-        self.eaction_cooldown_entry = ttk.Entry(parent)
+        ttk.Label(parent, text="Effective Action Cooldown (ms):", font=label_font).pack(pady=5, padx=10, anchor="w")
+        self.eaction_cooldown_entry = ttk.Entry(parent, font=entry_font)
         self.eaction_cooldown_entry.insert(0, str(int(self.tracker.settings_manager.eapm_cooldown * 1000)))
         self.eaction_cooldown_entry.pack(pady=5, padx=10, fill="x")
 
-        ttk.Button(parent, text="Apply Settings", command=self.apply_settings).pack(pady=10, padx=10)
+        ttk.Button(parent, text="Apply Settings", command=self.apply_settings, style='TButton').pack(pady=10, padx=10)
 
     def update_transparency(self, value):
         self.tracker.gui_manager.update_transparency(value)

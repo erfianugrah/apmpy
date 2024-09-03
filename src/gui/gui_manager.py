@@ -4,7 +4,7 @@ import logging
 from utils import get_icon_path, set_window_icon, set_appwindow
 import platform
 import os
-from utils.font_loader import load_custom_font
+from utils.font_loader import load_custom_font, get_font
 from .main_frame import MainFrame
 from .graph_frame import GraphFrame
 from .settings_frame import SettingsFrame
@@ -19,6 +19,7 @@ class GUIManager:
         self.is_mini_view = False
         self.bg_color = '#F5F5F5'
         self.icon_path = get_icon_path()
+        self.custom_fonts = None
 
     def setup_gui(self):
         self.root = tk.Tk()
@@ -26,34 +27,48 @@ class GUIManager:
         self.root.title("APM Tracker")
         self.root.geometry("600x500")
         self.root.protocol("WM_DELETE_WINDOW", self.tracker.on_closing)
-        self.setup_notebook()
         self.setup_custom_font()
+        self.setup_styles()
+        self.setup_notebook()
         self.create_mini_window()
-        self.root.bind('<Control-m>', self.toggle_view) 
+        self.root.bind('<Control-m>', self.toggle_view)
 
-    def setup_notebook(self):
+    def setup_custom_font(self):
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        font_path = os.path.join(base_path, 'assets', 'fonts', 'IosevkaTermNerdFont-Regular.ttf')
+        self.custom_fonts = load_custom_font(font_path, "IosevkaTerm NF", [12, 14, 20, 24])
+
+    def setup_styles(self):
         style = ttk.Style(self.root)
         style.theme_use('clam')
 
+        # Configure styles for different widget types
+        style.configure('TButton', font=('IosevkaTerm NF', 12, 'bold'))
+        style.configure('TLabel', font=('IosevkaTerm NF', 12))
+        style.configure('TEntry', font=('IosevkaTerm NF', 12))
+        style.configure('TCombobox', font=('IosevkaTerm NF', 12))
+        
+        # Configure styles for specific widgets in MainFrame
+        style.configure('Title.TLabel', font=('IosevkaTerm NF', 24, 'bold'), foreground='#61afef')
+        style.configure('Subtitle.TLabel', font=('IosevkaTerm NF', 14), foreground='#98c379')
+        style.configure('Data.TLabel', font=('IosevkaTerm NF', 20, 'bold'), foreground='#e5c07b')
+        style.configure('DataLabel.TLabel', font=('IosevkaTerm NF', 12), foreground='#abb2bf')
+
+
+    def setup_notebook(self):
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(expand=True, fill='both')
 
-        self.main_frame = MainFrame(self.notebook, self.tracker)
+        self.main_frame = MainFrame(self.notebook, self.tracker, self.custom_fonts)
         self.graph_frame = GraphFrame(self.notebook, self.tracker)
-        self.settings_frame = SettingsFrame(self.notebook, self.tracker)
+        self.settings_frame = SettingsFrame(self.notebook, self.tracker, self.custom_fonts)
 
         self.notebook.add(self.main_frame.frame, text='Main')
         self.notebook.add(self.graph_frame.frame, text='Graph')
         self.notebook.add(self.settings_frame.frame, text='Settings')
 
-    def setup_custom_font(self):
-        font_path = os.path.join('assets', 'fonts', 'IosevkaTermNerdFont-Regular.ttf')
-        self.custom_font = load_custom_font(font_path, "Iosevka Term Nerd Font", [12, 14, 20, 24])
-    # def setup_custom_font(self):
-    #     self.custom_font = tk.font.Font(family="Segoe UI", size=12)
-
     def create_mini_window(self):
-        self.mini_window = MiniWindow(self.root, self.tracker)
+        self.mini_window = MiniWindow(self.root, self.tracker, self.custom_fonts)
 
     def update_transparency(self, value):
         alpha = float(value)

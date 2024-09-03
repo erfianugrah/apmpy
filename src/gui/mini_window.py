@@ -1,10 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
+from utils.font_loader import get_font
 
 class MiniWindow:
-    def __init__(self, root, tracker):
+    def __init__(self, root, tracker, custom_fonts):
         self.root = root
         self.tracker = tracker
+        self.custom_fonts = custom_fonts
         self.window = tk.Toplevel(root)
         self.setup_mini_window()
 
@@ -22,9 +24,11 @@ class MiniWindow:
         self.apm_var = tk.StringVar()
         self.eapm_var = tk.StringVar()
 
-        self.apm_label = tk.Label(self.frame, textvariable=self.apm_var, font=self.tracker.gui_manager.custom_font, bg=self.tracker.gui_manager.bg_color)
+        label_font = get_font(self.custom_fonts, 12)
+
+        self.apm_label = tk.Label(self.frame, textvariable=self.apm_var, font=label_font, bg=self.tracker.gui_manager.bg_color)
         self.apm_label.pack(anchor='w', padx=5, pady=2)
-        self.eapm_label = tk.Label(self.frame, textvariable=self.eapm_var, font=self.tracker.gui_manager.custom_font, bg=self.tracker.gui_manager.bg_color)
+        self.eapm_label = tk.Label(self.frame, textvariable=self.eapm_var, font=label_font, bg=self.tracker.gui_manager.bg_color)
         self.eapm_label.pack(anchor='w', padx=5, pady=2)
 
         self.window.bind('<ButtonPress-1>', self.start_move)
