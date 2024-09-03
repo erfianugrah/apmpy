@@ -3,7 +3,8 @@ from tkinter import ttk
 import logging
 from utils import get_icon_path, set_window_icon, set_appwindow
 import platform
-
+import os
+from utils.font_loader import load_custom_font
 from .main_frame import MainFrame
 from .graph_frame import GraphFrame
 from .settings_frame import SettingsFrame
@@ -23,7 +24,7 @@ class GUIManager:
         self.root = tk.Tk()
         set_window_icon(self.root, self.icon_path)
         self.root.title("APM Tracker")
-        self.root.geometry("600x400")
+        self.root.geometry("600x500")
         self.root.protocol("WM_DELETE_WINDOW", self.tracker.on_closing)
         self.setup_notebook()
         self.setup_custom_font()
@@ -46,7 +47,10 @@ class GUIManager:
         self.notebook.add(self.settings_frame.frame, text='Settings')
 
     def setup_custom_font(self):
-        self.custom_font = tk.font.Font(family="Segoe UI", size=12)
+        font_path = os.path.join('assets', 'fonts', 'IosevkaTermNerdFont-Regular.ttf')
+        self.custom_font = load_custom_font(font_path, "Iosevka Term Nerd Font", [12, 14, 20, 24])
+    # def setup_custom_font(self):
+    #     self.custom_font = tk.font.Font(family="Segoe UI", size=12)
 
     def create_mini_window(self):
         self.mini_window = MiniWindow(self.root, self.tracker)
