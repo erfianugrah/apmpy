@@ -1,17 +1,17 @@
 import tkinter as tk
 from tkinter import ttk
-from utils.font_loader import get_font 
+# from utils.font_loader import load_custom_font 
 from utils.constants import (
     BACKGROUND_COLOR, FRAME_BACKGROUND_COLOR, TITLE_COLOR, SUBTITLE_COLOR,
     DATA_COLOR, DATA_LABEL_COLOR, TITLE_FONT_SIZE, SUBTITLE_FONT_SIZE,
-    DATA_FONT_SIZE, LABEL_FONT_SIZE
+    DATA_FONT_SIZE, LABEL_FONT_SIZE, FONT_NAME
 )
 
 class MainFrame:
     def __init__(self, parent, tracker, custom_fonts):
         self.parent = parent
         self.tracker = tracker
-        self.custom_fonts = custom_fonts
+        FONT_NAME = custom_fonts
         self.frame = ttk.Frame(parent, style='MainFrame.TFrame')
         self.setup_styles()
         self.setup_main_frame()
@@ -19,12 +19,12 @@ class MainFrame:
     def setup_styles(self):
         style = ttk.Style()
         style.configure('MainFrame.TFrame', background=BACKGROUND_COLOR)
-        style.configure('Title.TLabel', background=BACKGROUND_COLOR, foreground=TITLE_COLOR, font=get_font(self.custom_fonts, TITLE_FONT_SIZE))
-        style.configure('Subtitle.TLabel', background=BACKGROUND_COLOR, foreground=SUBTITLE_COLOR, font=get_font(self.custom_fonts, SUBTITLE_FONT_SIZE))
-        style.configure('Data.TLabel', background=FRAME_BACKGROUND_COLOR, foreground=DATA_COLOR, font=get_font(self.custom_fonts, DATA_FONT_SIZE))
-        style.configure('DataLabel.TLabel', background=FRAME_BACKGROUND_COLOR, foreground=DATA_LABEL_COLOR, font=get_font(self.custom_fonts, LABEL_FONT_SIZE))
+        style.configure('Title.TLabel', background=BACKGROUND_COLOR, foreground=TITLE_COLOR, font=(FONT_NAME, TITLE_FONT_SIZE))
+        style.configure('Subtitle.TLabel', background=BACKGROUND_COLOR, foreground=SUBTITLE_COLOR, font=(FONT_NAME, SUBTITLE_FONT_SIZE))
+        style.configure('Data.TLabel', background=FRAME_BACKGROUND_COLOR, foreground=DATA_COLOR, font=(FONT_NAME, DATA_FONT_SIZE))
+        style.configure('DataLabel.TLabel', background=FRAME_BACKGROUND_COLOR, foreground=DATA_LABEL_COLOR, font=(FONT_NAME, LABEL_FONT_SIZE))
         style.configure('DataFrame.TFrame', background=FRAME_BACKGROUND_COLOR)
-        style.configure('Toggle.TButton', font=get_font(self.custom_fonts, LABEL_FONT_SIZE))
+        style.configure('Toggle.TButton', font=(FONT_NAME, LABEL_FONT_SIZE))
 
     def setup_main_frame(self):
         self.frame.columnconfigure(0, weight=1)

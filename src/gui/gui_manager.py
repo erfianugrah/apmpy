@@ -4,7 +4,7 @@ import logging
 from utils import get_icon_path, set_window_icon, set_appwindow
 import platform
 import os
-from utils.font_loader import load_custom_font, get_font
+from utils.font_loader import load_custom_font
 from .main_frame import MainFrame
 from .graph_frame import GraphFrame
 from .settings_frame import SettingsFrame

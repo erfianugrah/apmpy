@@ -307,16 +307,16 @@ To create a standalone executable manually:
 ## Screenshots
 
 ### Main Window
-![main_window](./screenshots/apm_main_window.png)
+![main_window](./assets/screenshots/apm_main_window.png)
 
 ### Mini Window
-![mini_window](./screenshots/obs_mini_window.png)
+![mini_window](./assets/screenshots/obs_mini_window.png)
 
 ### Graphs
-![graph](./screenshots/apm_graph.png)
+![graph](./assets/screenshots/apm_graph.png)
 
 ## Demo
-![demo_gif](./screenshots/demo.gif)
+![demo_gif](./assets/screenshots/demo.gif)
 
 ## Contributing
 

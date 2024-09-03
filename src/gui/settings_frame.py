@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import logging
-from utils.font_loader import get_font
-from utils.constants import FONT_NAME, LABEL_FONT_SIZE
+# from utils.font_loader import get_font
+from utils.constants import * 
 
 class SettingsFrame:
     def __init__(self, parent, tracker, custom_fonts):
@@ -85,7 +85,7 @@ class SettingsFrame:
 
         ttk.Label(parent, text="Log Level:", font=label_font).pack(pady=5, padx=10, anchor="w")
         self.log_level_combobox = ttk.Combobox(parent, 
-            values=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+            values=LOG_LEVELS,
             font=entry_font)
         self.log_level_combobox.set(logging.getLevelName(self.tracker.settings_manager.log_level))
         self.log_level_combobox.pack(pady=5, padx=10, fill="x")
