@@ -9,6 +9,7 @@ class InputManager:
     def __init__(self, tracker):
         self.tracker = tracker
         self.input_event = threading.Event()
+        self.last_key = None
 
     def input_loop(self):
         def on_press(key):

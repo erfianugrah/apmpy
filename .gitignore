@@ -4,3 +4,4 @@ build/
 *.log
 *pycache*
 settings.json
+settings.yaml

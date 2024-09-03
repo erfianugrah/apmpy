@@ -25,10 +25,10 @@ class GUIManager:
         self.root.title("APM Tracker")
         self.root.geometry("600x400")
         self.root.protocol("WM_DELETE_WINDOW", self.tracker.on_closing)
-
         self.setup_notebook()
         self.setup_custom_font()
         self.create_mini_window()
+        self.root.bind('<Control-m>', self.toggle_view) 
 
     def setup_notebook(self):
         style = ttk.Style(self.root)

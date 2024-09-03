@@ -78,6 +78,22 @@ class GraphFrame:
         # Force redraw of the figure
         self.figure.canvas.draw()
 
+        if not np.array_equal(new_apm_data, self.apm_data) or not np.array_equal(new_eapm_data, self.eapm_data):
+            self.apm_data = new_apm_data
+            self.eapm_data = new_eapm_data
+
+            for rect, h in zip(self.apm_bars, self.apm_data):
+                rect.set_height(h)
+            for rect, h in zip(self.eapm_bars, self.eapm_data):
+                rect.set_height(h)
+
+            max_value = max(np.max(self.apm_data), np.max(self.eapm_data))
+            y_max = min(max(max_value * 1.1, 1), self.tracker.settings_manager.max_actions_per_second)
+            self.ax.set_ylim(0, y_max)
+            self.ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True, nbins=5))
+
+            self.figure.canvas.draw()
+
         return self.apm_bars + self.eapm_bars
 
     def update_graph_settings(self):

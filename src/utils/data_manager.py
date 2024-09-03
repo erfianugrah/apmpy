@@ -1,4 +1,6 @@
 import time
+import csv
+import datetime
 from collections import deque
 
 class DataManager:
@@ -65,3 +67,17 @@ class DataManager:
 
     def current_time(self):
         return time.time()
+
+    def export_data(self, filename=None):
+        if filename is None:
+            filename = f"apm_data_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Timestamp', 'Action Type'])
+            for action in self.actions:
+                writer.writerow([action, 'Regular Action'])
+            for action in self.effective_actions:
+                writer.writerow([action, 'Effective Action'])
+        
+        return filename

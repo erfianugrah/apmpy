@@ -1,4 +1,5 @@
 import json
+import yaml
 import logging
 from utils.window_utils import update_window_list
 
@@ -30,8 +31,8 @@ class SettingsManager:
             'eapm_cooldown': self.eapm_cooldown
         }
         try:
-            with open('settings.json', 'w') as f:
-                json.dump(settings, f)
+            with open('settings.yaml', 'w') as f:
+                yaml.dump(settings, f, default_flow_style=False)
             logging.info("Settings saved successfully")
         except IOError as e:
             logging.error(f"Error saving settings: {e}")
@@ -52,8 +53,8 @@ class SettingsManager:
             logging.info("Settings loaded successfully")
         except FileNotFoundError:
             logging.info("Settings file not found. Using defaults.")
-        except json.JSONDecodeError:
-            logging.error("Error decoding settings file. Using defaults.")
+        except yaml.YAMLError as e:
+            logging.error(f"Error parsing settings file: {e}")
 
     def update_transparency(self, value):
         self.transparency = float(value)
