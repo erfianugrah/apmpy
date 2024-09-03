@@ -4,10 +4,10 @@ from utils.constants import *
 # from utils.font_loader import get_font
 
 class MiniWindow:
-    def __init__(self, root, tracker, custom_fonts):
+    def __init__(self, root, tracker):
         self.root = root
         self.tracker = tracker
-        self.custom_fonts = custom_fonts
+        # self.custom_fonts = custom_fonts
         self.window = tk.Toplevel(root)
         self.setup_mini_window()
 

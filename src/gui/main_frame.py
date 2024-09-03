@@ -8,10 +8,10 @@ from utils.constants import (
 )
 
 class MainFrame:
-    def __init__(self, parent, tracker, custom_fonts):
+    def __init__(self, parent, tracker):
         self.parent = parent
         self.tracker = tracker
-        FONT_NAME = custom_fonts
+        # FONT_NAME = custom_fonts
         self.frame = ttk.Frame(parent, style='MainFrame.TFrame')
         self.setup_styles()
         self.setup_main_frame()

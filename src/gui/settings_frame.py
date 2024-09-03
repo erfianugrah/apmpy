@@ -5,10 +5,10 @@ import logging
 from utils.constants import * 
 
 class SettingsFrame:
-    def __init__(self, parent, tracker, custom_fonts):
+    def __init__(self, parent, tracker):
         self.parent = parent
         self.tracker = tracker
-        self.custom_fonts = custom_fonts
+        # self.custom_fonts = custom_fonts
         self.frame = ttk.Frame(parent)
         self.setup_settings_frame()
 

@@ -5,10 +5,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.animation as animation
 import numpy as np
 import os
-from matplotlib import font_manager
+from matplotlib import font_manager as fm
 from utils.constants import (
     GRAPH_APM_COLOR, GRAPH_EAPM_COLOR, GRAPH_ALPHA, GRAPH_DPI, GRAPH_FIGSIZE,
-    FONT_FILENAME, FONT_NAME
+    FONT_FILENAME, FONT_NAME, FONT_PATH
 )
 
 class GraphFrame:
@@ -16,16 +16,21 @@ class GraphFrame:
         self.parent = parent
         self.tracker = tracker
         self.frame = ttk.Frame(parent)
-        self.load_custom_font()
+        # self.load_custom_font()
         self.setup_graph_frame()
 
-    def load_custom_font(self):
-        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        font_path = os.path.join(base_path, 'assets', 'fonts', FONT_FILENAME)
-        font_manager.fontManager.addfont(font_path)
-        plt.rcParams['font.family'] = FONT_NAME 
+    # def load_custom_font(self):
+        # base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        # font_path = os.path.join(base_path, 'assets', 'fonts', FONT_FILENAME)
+    #     font_manager.fontManager.addfont(FONT_PATH)
+    #     plt.rcParams['font.family'] = FONT_NAME 
 
     def setup_graph_frame(self):
+        # base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        # font_path = os.path.join(base_path, 'assets', 'fonts', FONT_FILENAME)
+        # font_file = fm.findSystemFonts(fontpaths=font_path)
+        # fm.fontManager.addfont(font_path)
+        plt.rcParams['font.family'] = "monospace" 
         plt.rcParams['font.size'] = 10  # Base font size
 
         self.figure, self.ax = plt.subplots(figsize=GRAPH_FIGSIZE, dpi=GRAPH_DPI)

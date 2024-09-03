@@ -29,21 +29,21 @@ def load_custom_font(font_path, font_name, sizes):
     
     return fonts
 
-def get_font(custom_fonts, size, weight="normal"):
-    """
-    Get a font of the specified size, with fallback to default font.
-    
-    :param custom_fonts: Dictionary of custom fonts
-    :param size: Desired font size
-    :param weight: Font weight (e.g., "normal", "bold")
-    :return: Font object
-    """
-    if size in custom_fonts:
-        font = custom_fonts[size]
-        if weight == "bold":
-            font = font.copy()
-            font.configure(weight="bold")
-        return font
-    else:
-        logging.warning(f"Font size {size} not found in custom fonts. Using default font.")
-        return tkFont.Font(family="TkDefaultFont", size=size, weight=weight)
+# def get_font(custom_fonts, size, weight="normal"):
+#     """
+#     Get a font of the specified size, with fallback to default font.
+#     
+#     :param custom_fonts: Dictionary of custom fonts
+#     :param size: Desired font size
+#     :param weight: Font weight (e.g., "normal", "bold")
+#     :return: Font object
+#     """
+#     if size in custom_fonts:
+#         font = custom_fonts[size]
+#         if weight == "bold":
+#             font = font.copy()
+#             font.configure(weight="bold")
+#         return font
+#     else:
+#         logging.warning(f"Font size {size} not found in custom fonts. Using default font.")
+#         return tkFont.Font(family="TkDefaultFont", size=size, weight=weight)

@@ -46,6 +46,7 @@ LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
 
 # File Paths
 FONT_FILENAME = 'IosevkaTermNerdFont-Regular.ttf'
+FONT_PATH = 'assets/fonts/IosevkaTermNerdFont-Regular.ttf'
 FONT_NAME= 'IosevkaTerm NF'
 ICON_FILENAME = 'keebfire.png'
 
