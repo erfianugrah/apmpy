@@ -1,13 +1,15 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 import logging
+import datetime
+import matplotlib.pyplot as plt
+import threading
 from utils.constants import * 
 
 class SettingsFrame:
     def __init__(self, parent, tracker):
         self.parent = parent
         self.tracker = tracker
-        # self.custom_fonts = custom_fonts
         self.frame = ttk.Frame(parent)
         self.setup_settings_frame()
 
@@ -126,6 +128,8 @@ class SettingsFrame:
         self.eaction_cooldown_entry.pack(pady=5, padx=10, fill="x")
 
         ttk.Button(parent, text="Apply Settings", command=self.apply_settings, style='TButton').pack(pady=10, padx=10)
+        ttk.Button(parent, text="Export Data", command=self.export_data, style='TButton').pack(pady=10, padx=10)
+        ttk.Button(parent, text="Export Graph", command=self.export_graph, style='TButton').pack(pady=10, padx=10)
 
     def update_transparency(self, value):
         self.tracker.gui_manager.update_transparency(value)
@@ -181,3 +185,50 @@ class SettingsFrame:
         except Exception as e:
             logging.error(f"Error applying settings: {str(e)}")
             messagebox.showerror("Error", f"An error occurred while applying settings: {str(e)}")
+
+    def export_graph(self):
+        default_filename = f"apm_graph_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".png",
+            filetypes=[("PNG files", "*.png"), ("All files", "*.*")],
+            initialfile=default_filename
+        )
+        if file_path:
+            threading.Thread(target=self._export_graph_thread, args=(file_path,), daemon=True).start()
+        else:
+            logging.info("Graph export cancelled by user")
+
+    def _export_graph_thread(self, file_path):
+        try:
+            fig = self.tracker.gui_manager.graph_frame.export_graph()
+            if fig is None:
+                self.tracker.gui_manager.root.after(0, lambda: messagebox.showerror("Export Error", "Failed to create graph for export."))
+                return
+            fig.savefig(file_path, dpi=300, bbox_inches='tight')
+            plt.close(fig)
+            logging.info(f"Graph exported to {file_path}")
+            self.tracker.gui_manager.root.after(0, lambda: messagebox.showinfo("Export Successful", f"Graph exported to {file_path}"))
+        except Exception as e:
+            logging.error(f"Error exporting graph: {str(e)}")
+            self.tracker.gui_manager.root.after(0, lambda: messagebox.showerror("Export Error", f"Failed to export graph: {str(e)}"))
+
+    def export_data(self):
+        default_filename = f"apm_data_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            initialfile=default_filename
+        )
+        if file_path:
+            threading.Thread(target=self._export_data_thread, args=(file_path,), daemon=True).start()
+        else:
+            logging.info("Data export cancelled by user")
+
+    def _export_data_thread(self, file_path):
+        try:
+            exported_file = self.tracker.data_manager.export_data(file_path)
+            logging.info(f"Data exported to {exported_file}")
+            self.tracker.gui_manager.root.after(0, lambda: messagebox.showinfo("Export Successful", f"Data exported to {exported_file}"))
+        except Exception as e:
+            logging.error(f"Error exporting data: {str(e)}")
+            self.tracker.gui_manager.root.after(0, lambda: messagebox.showerror("Export Error", f"Failed to export data: {str(e)}"))

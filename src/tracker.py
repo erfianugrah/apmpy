@@ -5,7 +5,6 @@ from gui.gui_manager import GUIManager
 from utils.input_manager import InputManager
 from utils.data_manager import DataManager
 from utils.settings_manager import SettingsManager
-from utils.constants import DEFAULT_UPDATE_INTERVAL
 
 class APMTracker:
     def __init__(self):
@@ -17,6 +16,9 @@ class APMTracker:
 
     def run(self):
         try:
+            # Import constants only when needed
+            from utils.constants import DEFAULT_UPDATE_INTERVAL
+            
             self.gui_manager.setup_gui()
             self.settings_manager.load_settings()
             self.input_thread = threading.Thread(target=self.input_manager.input_loop, daemon=True)

@@ -6,10 +6,9 @@ from tracker import APMTracker
 from utils.constants import LOG_LEVELS
 from utils.error_handler import safe_operation, APMTrackerError, handle_exception
 import sys
-
-# logging.basicConfig(level=logging.DEBUG)
-# logging.debug(f"Current working directory: {os.getcwd()}")
-# logging.debug(f"Script location: {os.path.abspath(__file__)}")
+import cProfile
+import pstats
+import io
 
 def setup_logging(log_level):
     """
@@ -51,10 +50,13 @@ def main():
     logging.info("Starting APM Tracker")
     tracker.run()
 
-if __name__ == "__main__":
-    # Set the global exception handler
-    sys.excepthook = handle_exception
-
+def profile_main():
+    """
+    Profile the main function and print the results.
+    """
+    pr = cProfile.Profile()
+    pr.enable()
+    
     try:
         main()
     except APMTrackerError as e:
@@ -65,3 +67,20 @@ if __name__ == "__main__":
         logging.debug(traceback.format_exc())
     finally:
         logging.info("APM Tracker shutting down")
+    
+    pr.disable()
+    s = io.StringIO()
+    ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+    ps.print_stats()
+    
+    with open('profile_results.txt', 'w') as f:
+        f.write(s.getvalue())
+    
+    print("Profile results have been written to 'profile_results.txt'")
+
+if __name__ == "__main__":
+    # Set the global exception handler
+    sys.excepthook = handle_exception
+
+    # Run the profiled version of main
+    profile_main()

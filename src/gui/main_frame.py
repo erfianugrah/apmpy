@@ -26,22 +26,35 @@ class MainFrame:
 
     def setup_main_frame(self):
         self.frame.columnconfigure(0, weight=1)
-        self.frame.columnconfigure(1, weight=1)
+        self.frame.rowconfigure(1, weight=1)  # Allow the middle section to expand
 
-        ttk.Label(self.frame, text="APM Tracker", style='Title.TLabel').grid(row=0, column=0, columnspan=2, pady=(20, 5))
-        ttk.Label(self.frame, text="Monitor your Actions Per Minute", style='Subtitle.TLabel').grid(row=1, column=0, columnspan=2, pady=(0, 20))
+        top_frame = ttk.Frame(self.frame, style='MainFrame.TFrame')
+        top_frame.grid(row=0, column=0, sticky='ew')
 
-        self.create_data_display(2, 0, "Current APM", 'current_apm_var', TITLE_COLOR)
-        self.create_data_display(2, 1, "Current eAPM", 'current_eapm_var', SUBTITLE_COLOR)
-        self.create_data_display(3, 0, "Peak APM", 'peak_apm_var', '#e06c75')
-        self.create_data_display(3, 1, "Peak eAPM", 'peak_eapm_var', '#d19a66')
-        self.create_data_display(4, 0, "Average APM", 'avg_apm_var', '#c678dd')
-        self.create_data_display(4, 1, "Average eAPM", 'avg_eapm_var', '#56b6c2')
+        ttk.Label(top_frame, text="APM Tracker", style='Title.TLabel').pack(pady=(20, 5))
+        ttk.Label(top_frame, text="Monitor your Actions Per Minute", style='Subtitle.TLabel').pack(pady=(0, 20))
 
-        ttk.Button(self.frame, text="Toggle Mini View", style='Toggle.TButton', command=self.tracker.gui_manager.toggle_view).grid(row=5, column=0, columnspan=2, pady=20)
+        middle_frame = ttk.Frame(self.frame, style='MainFrame.TFrame')
+        middle_frame.grid(row=1, column=0, sticky='nsew')
+        middle_frame.columnconfigure(0, weight=1)
+        middle_frame.columnconfigure(1, weight=1)
+        for i in range(3):
+            middle_frame.rowconfigure(i, weight=1)
 
-    def create_data_display(self, row, column, label_text, var_name, color):
-        frame = ttk.Frame(self.frame, style='DataFrame.TFrame')
+        self.create_data_display(middle_frame, 0, 0, "Current APM", 'current_apm_var', TITLE_COLOR)
+        self.create_data_display(middle_frame, 0, 1, "Current eAPM", 'current_eapm_var', SUBTITLE_COLOR)
+        self.create_data_display(middle_frame, 1, 0, "Peak APM", 'peak_apm_var', '#e06c75')
+        self.create_data_display(middle_frame, 1, 1, "Peak eAPM", 'peak_eapm_var', '#d19a66')
+        self.create_data_display(middle_frame, 2, 0, "Average APM", 'avg_apm_var', '#c678dd')
+        self.create_data_display(middle_frame, 2, 1, "Average eAPM", 'avg_eapm_var', '#56b6c2')
+
+        bottom_frame = ttk.Frame(self.frame, style='MainFrame.TFrame')
+        bottom_frame.grid(row=2, column=0, sticky='ew')
+
+        ttk.Button(bottom_frame, text="Toggle Mini View", style='Toggle.TButton', command=self.tracker.gui_manager.toggle_view).pack(pady=20)
+
+    def create_data_display(self, parent, row, column, label_text, var_name, color):
+        frame = ttk.Frame(parent, style='DataFrame.TFrame')
         frame.grid(row=row, column=column, padx=10, pady=10, sticky='nsew')
         
         ttk.Label(frame, text=label_text, style='DataLabel.TLabel').pack(pady=(5, 0))

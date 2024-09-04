@@ -18,6 +18,8 @@ class GUIManager:
         self.is_mini_view = False
         self.bg_color = BG_COLOR
         self.icon_path = get_icon_path()
+        self.update_counter = 0
+        self.update_frequency = 5  # Update GUI every 5 cycles
 
     def setup_gui(self):
         self.root = tk.Tk()
@@ -81,20 +83,24 @@ class GUIManager:
         if not self.tracker.running:
             return
 
-        current_apm = self.tracker.data_manager.calculate_current_apm()
-        current_eapm = self.tracker.data_manager.calculate_current_eapm()
-        avg_apm = self.tracker.data_manager.calculate_average_apm()
-        avg_eapm = self.tracker.data_manager.calculate_average_eapm()
+        self.update_counter += 1
+        if self.update_counter >= self.update_frequency:
+            current_apm = self.tracker.data_manager.calculate_current_apm()
+            current_eapm = self.tracker.data_manager.calculate_current_eapm()
+            avg_apm = self.tracker.data_manager.calculate_average_apm()
+            avg_eapm = self.tracker.data_manager.calculate_average_eapm()
 
-        self.tracker.data_manager.peak_apm = max(self.tracker.data_manager.peak_apm, current_apm)
-        self.tracker.data_manager.peak_eapm = max(self.tracker.data_manager.peak_eapm, current_eapm)
+            self.tracker.data_manager.peak_apm = max(self.tracker.data_manager.peak_apm, current_apm)
+            self.tracker.data_manager.peak_eapm = max(self.tracker.data_manager.peak_eapm, current_eapm)
 
-        self.main_frame.update_values(current_apm, current_eapm, 
-                                      self.tracker.data_manager.peak_apm, 
-                                      self.tracker.data_manager.peak_eapm,
-                                      avg_apm, avg_eapm)
+            self.main_frame.update_values(current_apm, current_eapm, 
+                                          self.tracker.data_manager.peak_apm, 
+                                          self.tracker.data_manager.peak_eapm,
+                                          avg_apm, avg_eapm)
 
-        self.mini_window.update_values(current_apm, current_eapm)
+            self.mini_window.update_values(current_apm, current_eapm)
+            
+            self.update_counter = 0
 
         self.update_job = self.root.after(self.tracker.settings_manager.update_interval, self.update_gui)
 

@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.animation as animation
-import numpy as np
-import os
-from matplotlib import font_manager as fm
+import datetime
 from utils.constants import (
     GRAPH_APM_COLOR, GRAPH_EAPM_COLOR, GRAPH_ALPHA, GRAPH_DPI, GRAPH_FIGSIZE,
     FONT_FILENAME, FONT_NAME, FONT_PATH
@@ -126,3 +127,50 @@ class GraphFrame:
         self.ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True, nbins=5))
 
         self.canvas.draw()
+    
+    def export_graph(self):
+        try:
+            # Create a new figure for export (to avoid modifying the displayed graph)
+            fig, ax = plt.subplots(figsize=(10, 6))
+
+            current_time = self.tracker.data_manager.current_time()
+            x = np.arange(self.tracker.settings_manager.graph_time_range)
+            
+            apm_data = np.zeros(self.tracker.settings_manager.graph_time_range)
+            eapm_data = np.zeros(self.tracker.settings_manager.graph_time_range)
+
+            for t in self.tracker.data_manager.actions:
+                if current_time - t <= self.tracker.settings_manager.graph_time_range:
+                    index = int(current_time - t)
+                    if index < self.tracker.settings_manager.graph_time_range:
+                        apm_data[index] += 1
+
+            for t in self.tracker.data_manager.effective_actions:
+                if current_time - t <= self.tracker.settings_manager.graph_time_range:
+                    index = int(current_time - t)
+                    if index < self.tracker.settings_manager.graph_time_range:
+                        eapm_data[index] += 1
+
+            ax.bar(x, apm_data, color='blue', alpha=0.5, label='APM')
+            ax.bar(x, eapm_data, color='green', alpha=0.5, label='eAPM')
+
+            ax.legend(loc='upper left')
+            ax.set_title('APM and eAPM over time')
+            ax.set_xlabel('Time (seconds ago)')
+            ax.set_ylabel('Number of Actions')
+            ax.set_xlim(self.tracker.settings_manager.graph_time_range - 1, 0)
+
+            # Add timestamp to the graph
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            plt.text(0.95, 0.05, f"Exported: {timestamp}",
+                     horizontalalignment='right',
+                     verticalalignment='bottom',
+                     transform=ax.transAxes,
+                     bbox=dict(facecolor='white', alpha=0.8),
+                     fontsize=8)
+
+            return fig
+
+        except Exception as e:
+            logging.error(f"Error creating graph for export: {str(e)}")
+            return None

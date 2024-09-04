@@ -1,4 +1,3 @@
-import json
 import yaml
 import logging
 from utils.window_utils import update_window_list
@@ -44,17 +43,17 @@ class SettingsManager:
 
     def load_settings(self):
         try:
-            with open('settings.json', 'r') as f:
-                settings = json.load(f)
+            with open('settings.yaml', 'r') as f:
+                settings = yaml.safe_load(f)
                 self.target_program = settings.get('target_program', '')
-                self.transparency = settings.get('transparency', 1.0)
+                self.transparency = settings.get('transparency', DEFAULT_TRANSPARENCY)
                 self.log_level = getattr(logging, settings.get('log_level', 'INFO'))
-                self.update_interval = settings.get('update_interval', 500)
-                self.graph_update_interval = settings.get('graph_update_interval', 1000)
-                self.graph_time_range = settings.get('graph_time_range', 60)
-                self.max_actions_per_second = settings.get('max_actions_per_second', 10)
-                self.action_cooldown = settings.get('action_cooldown', 0.05)
-                self.eapm_cooldown = settings.get('eapm_cooldown', 0.5)
+                self.update_interval = settings.get('update_interval', DEFAULT_UPDATE_INTERVAL)
+                self.graph_update_interval = settings.get('graph_update_interval', DEFAULT_GRAPH_UPDATE_INTERVAL)
+                self.graph_time_range = settings.get('graph_time_range', DEFAULT_GRAPH_TIME_RANGE)
+                self.max_actions_per_second = settings.get('max_actions_per_second', DEFAULT_MAX_ACTIONS_PER_SECOND)
+                self.action_cooldown = settings.get('action_cooldown', DEFAULT_ACTION_COOLDOWN)
+                self.eapm_cooldown = settings.get('eapm_cooldown', DEFAULT_EAPM_COOLDOWN)
             logging.info("Settings loaded successfully")
         except FileNotFoundError:
             logging.info("Settings file not found. Using defaults.")
