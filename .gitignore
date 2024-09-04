@@ -5,3 +5,4 @@ build/
 *pycache*
 settings.json
 settings.yaml
+profile_results.txt

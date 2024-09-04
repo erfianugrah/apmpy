@@ -144,11 +144,159 @@ apm-tracker/
 
 ### Detailed Module Descriptions
 
-[The rest of the README.md content remains the same, with module descriptions accurately reflecting the current code structure.]
+#### src/
+
+The `src` directory contains the core application code.
+
+##### main.py
+- **Purpose**: Serves as the entry point of the application.
+- **Functionality**:
+  - Initializes the APMTracker
+  - Sets up logging based on user settings
+  - Handles the main execution loop and exception management
+
+##### tracker.py
+- **Purpose**: Contains the main `APMTracker` class.
+- **Functionality**:
+  - Coordinates between other modules
+  - Manages the overall application state
+  - Initializes and manages key components like DataManager, SettingsManager, GUIManager, and InputManager
+
+#### src/gui/
+
+The `gui` directory contains all GUI-related modules.
+
+##### gui_manager.py
+- **Purpose**: Manages the graphical user interface.
+- **Functionality**:
+  - Creates and updates the main window, graph, and mini-view
+  - Handles GUI events and user interactions
+  - Manages the transition between full view and mini view
+
+##### main_frame.py
+- **Purpose**: Defines the main frame of the application.
+- **Functionality**:
+  - Displays current APM, eAPM, peak values, and averages
+  - Updates values in real-time
+
+##### graph_frame.py
+- **Purpose**: Manages the graphical representation of APM and eAPM data.
+- **Functionality**:
+  - Creates and updates the APM/eAPM histogram
+  - Handles graph customization (time range, update intervals)
+
+##### settings_frame.py
+- **Purpose**: Provides a user interface for application settings.
+- **Functionality**:
+  - Allows users to adjust transparency, target program, update intervals, and other settings
+  - Handles saving and loading of user preferences
+
+##### mini_window.py
+- **Purpose**: Implements a compact view of the application.
+- **Functionality**:
+  - Displays essential information in a small, unobtrusive window
+  - Allows for easy toggling between full and mini views
+
+#### src/utils/
+
+The `utils` directory contains utility modules and managers for various functionalities.
+
+##### input_manager.py
+- **Purpose**: Handles keyboard and mouse input detection.
+- **Functionality**:
+  - Uses the `pynput` library to detect user actions
+  - Filters and processes input events
+  - Sends processed actions to the tracker
+
+##### data_manager.py
+- **Purpose**: Manages data collection and calculations.
+- **Functionality**:
+  - Stores action data
+  - Calculates APM and eAPM in real-time
+  - Provides methods for data analysis and retrieval
+
+##### settings_manager.py
+- **Purpose**: Handles application settings and configurations.
+- **Functionality**:
+  - Manages saving and loading of user settings
+  - Handles the target program functionality
+  - Provides methods to update and retrieve various settings
+
+##### constants.py
+- **Purpose**: Defines constant values used throughout the application.
+- **Functionality**:
+  - Stores default values for settings
+  - Defines color schemes and font settings
+  - Provides other constant values used across modules
+
+##### window_utils.py
+- **Purpose**: Provides utility functions for window management.
+- **Functionality**:
+  - Handles window list updates for target program selection
+  - Manages window styles and attributes
+
+##### icon_utils.py
+- **Purpose**: Manages application icons and related utilities.
+- **Functionality**:
+  - Provides functions to locate and set application icons
+  - Ensures proper icon display across different platforms
+
+#### icons/
+
+This directory contains the application icons in various formats:
+- `keebfire.ico`: Windows icon file
+- `keebfire.jpg` and `keebfire.png`: Image files for cross-platform use
+
+#### screenshots/
+
+Contains screenshots of the application for documentation and promotional purposes:
+- `apm_graph.png`: Screenshot of the APM/eAPM graph
+- `apm_main_window.png`: Main application window screenshot
+- `mini_window.png`: Mini view screenshot
+- `obs_mini_window.png`: OBS Detection
+- `demo.gif`: Demo of the program
+
+#### .github/workflows/deploy.yml
+
+- **Purpose**: Defines the GitHub Actions workflow for automated builds and releases.
+- **Functionality**:
+  - Triggers on new tag pushes or manual activation
+  - Builds Windows and Linux executables
+  - Creates GitHub releases with the built executables
 
 ## Building the Application
 
-[This section remains unchanged.]
+The project utilizes GitHub Actions for automated builds, streamlining the process of creating executables for both Windows and Linux platforms.
+
+### Automated Builds
+
+The build process is defined in `.github/workflows/deploy.yml`. It is triggered automatically when:
+- A new tag is pushed to the repository
+- The workflow is manually triggered
+
+The workflow performs the following steps:
+1. Sets up the build environment (Windows and Linux)
+2. Installs necessary dependencies
+3. Builds the executables using PyInstaller
+4. Creates a new GitHub release
+5. Uploads the built executables to the release
+
+### Manual Build Process
+
+To create a standalone executable manually:
+
+1. Ensure PyInstaller is installed:
+   ```sh
+   pip install pyinstaller
+   ```
+
+2. Run PyInstaller (example for Linux):
+   ```sh
+   MatplotlibPath=$(python -c "import matplotlib; import os; print(os.path.dirname(matplotlib.__file__))")
+   pyinstaller --onefile --add-data "$MatplotlibPath:matplotlib" --add-data "icons/keebfire.ico:." --add-data "icons:icons" --icon="icons/keebfire.png" --name="APMTracker" src/main.py
+   ```
+
+3. The executable will be generated in the `dist` directory.
 
 ## Screenshots
 
