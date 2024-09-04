@@ -112,10 +112,10 @@ class SettingsManager:
         if self.max_actions_per_second < 1:
             logging.warning("Invalid max actions per second. Setting to 1.")
             self.max_actions_per_second = 1
-        if self.action_cooldown < 0.01 or self.action_cooldown > 1:
+        if self.action_cooldown < 0.001 or self.action_cooldown > 1:
             logging.warning("Invalid action cooldown. Setting to 0.05 seconds.")
             self.action_cooldown = 0.05
-        if self.eapm_cooldown < 0.1 or self.eapm_cooldown > 2:
+        if self.eapm_cooldown < 0.01 or self.eapm_cooldown > 2:
             logging.warning("Invalid eAPM cooldown. Setting to 0.5 seconds.")
             self.eapm_cooldown = 0.5
 
