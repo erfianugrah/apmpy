@@ -232,3 +232,4 @@ class SettingsFrame:
         except Exception as e:
             logging.error(f"Error exporting data: {str(e)}")
             self.tracker.gui_manager.root.after(0, lambda: messagebox.showerror("Export Error", f"Failed to export data: {str(e)}"))
+
