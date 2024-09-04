@@ -156,7 +156,11 @@ apm-tracker/
 ![main_window](./assets/screenshots/apm_main_window.png)
 
 ### Mini Window
-![mini_window](./assets/screenshots/obs_mini_window.png)
+![mini_window](./assets/screenshots/mini_window.png)
+
+### OBS Detection
+![obs_mini_window](./assets/screenshots/obs_mini_window.png)
+I suggest toggling to Mini Window mode first before opening OBS
 
 ### Graphs
 ![graph](./assets/screenshots/apm_graph.png)
