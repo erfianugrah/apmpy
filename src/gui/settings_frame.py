@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import logging
-# from utils.font_loader import get_font
 from utils.constants import * 
 
 class SettingsFrame:

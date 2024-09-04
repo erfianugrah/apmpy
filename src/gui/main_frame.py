@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-# from utils.font_loader import load_custom_font 
 from utils.constants import (
     BACKGROUND_COLOR, FRAME_BACKGROUND_COLOR, TITLE_COLOR, SUBTITLE_COLOR,
     DATA_COLOR, DATA_LABEL_COLOR, TITLE_FONT_SIZE, SUBTITLE_FONT_SIZE,
@@ -11,7 +10,6 @@ class MainFrame:
     def __init__(self, parent, tracker):
         self.parent = parent
         self.tracker = tracker
-        # FONT_NAME = custom_fonts
         self.frame = ttk.Frame(parent, style='MainFrame.TFrame')
         self.setup_styles()
         self.setup_main_frame()
