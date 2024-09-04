@@ -11,7 +11,6 @@ class InputManager:
         self.tracker = tracker
         self.input_event = threading.Event()
         self.last_key = None
-        self.target_pid = None
 
     def input_loop(self):
         def on_press(key):
@@ -43,13 +42,11 @@ class InputManager:
             hwnd = win32gui.GetForegroundWindow()
             _, pid = win32process.GetWindowThreadProcessId(hwnd)
             
-            if self.target_pid != pid:
-                self.target_pid = pid
-                process = psutil.Process(pid)
-                active_window = process.name().lower()
-                target_program = self.tracker.settings_manager.target_program.lower()
-                return target_program in active_window
-            return True
+            process = psutil.Process(pid)
+            active_window = process.name().lower()
+            target_program = self.tracker.settings_manager.target_program.lower()
+            return target_program in active_window
         except Exception as e:
             logging.error(f"Error checking active window: {e}")
             return False
+
