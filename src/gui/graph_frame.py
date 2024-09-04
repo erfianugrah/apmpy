@@ -16,20 +16,9 @@ class GraphFrame:
         self.parent = parent
         self.tracker = tracker
         self.frame = ttk.Frame(parent)
-        # self.load_custom_font()
         self.setup_graph_frame()
 
-    # def load_custom_font(self):
-        # base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        # font_path = os.path.join(base_path, 'assets', 'fonts', FONT_FILENAME)
-    #     font_manager.fontManager.addfont(FONT_PATH)
-    #     plt.rcParams['font.family'] = FONT_NAME 
-
     def setup_graph_frame(self):
-        # base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        # font_path = os.path.join(base_path, 'assets', 'fonts', FONT_FILENAME)
-        # font_file = fm.findSystemFonts(fontpaths=font_path)
-        # fm.fontManager.addfont(font_path)
         plt.rcParams['font.family'] = "monospace" 
         plt.rcParams['font.size'] = 10  # Base font size
 
@@ -122,8 +111,8 @@ class GraphFrame:
         x = range(self.tracker.settings_manager.graph_time_range)
         self.apm_data = np.zeros(self.tracker.settings_manager.graph_time_range)
         self.eapm_data = np.zeros(self.tracker.settings_manager.graph_time_range)
-        self.apm_bars = self.ax.bar(x, self.apm_data, color='blue', alpha=0.5, label='APM')
-        self.eapm_bars = self.ax.bar(x, self.eapm_data, color='green', alpha=0.5, label='eAPM')
+        self.apm_bars = self.ax.bar(x, self.apm_data, color=GRAPH_APM_COLOR, alpha=GRAPH_ALPHA, label='APM')
+        self.eapm_bars = self.ax.bar(x, self.eapm_data, color=GRAPH_EAPM_COLOR, alpha=GRAPH_ALPHA, label='eAPM')
 
         self.ax.legend(loc='upper left')
         self.ax.set_title('APM and eAPM over time')

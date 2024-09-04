@@ -3,17 +3,11 @@ from tkinter import ttk
 import logging
 from utils import get_icon_path, set_window_icon, set_appwindow
 import platform
-import os
-# from utils.font_loader import load_custom_font
 from .main_frame import MainFrame
 from .graph_frame import GraphFrame
 from .settings_frame import SettingsFrame
 from .mini_window import MiniWindow
-from utils.constants import (
-    MAIN_WINDOW_SIZE, MAIN_WINDOW_TITLE, BG_COLOR, FONT_FILENAME, FONT_NAME,
-    TITLE_FONT_SIZE, SUBTITLE_FONT_SIZE, DATA_FONT_SIZE, LABEL_FONT_SIZE,
-    TITLE_COLOR, SUBTITLE_COLOR, DATA_COLOR, DATA_LABEL_COLOR
-)
+from utils.constants import *
 
 class GUIManager:
     def __init__(self, tracker):
@@ -24,7 +18,6 @@ class GUIManager:
         self.is_mini_view = False
         self.bg_color = BG_COLOR
         self.icon_path = get_icon_path()
-        # self.custom_fonts = None
 
     def setup_gui(self):
         self.root = tk.Tk()
@@ -32,30 +25,24 @@ class GUIManager:
         self.root.title(MAIN_WINDOW_TITLE)
         self.root.geometry(MAIN_WINDOW_SIZE)
         self.root.protocol("WM_DELETE_WINDOW", self.tracker.on_closing)
-        # self.setup_custom_font()
         self.setup_styles()
         self.setup_notebook()
         self.create_mini_window()
         self.root.bind('<Control-m>', self.toggle_view)
 
-    # def setup_custom_font(self):
-    #     base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    #     font_path = os.path.join(base_path, 'assets', 'fonts', FONT_FILENAME)
-    #     self.custom_fonts = load_custom_font(font_path, FONT_NAME, [LABEL_FONT_SIZE, SUBTITLE_FONT_SIZE, DATA_FONT_SIZE, TITLE_FONT_SIZE])
-
     def setup_styles(self):
         style = ttk.Style(self.root)
         style.theme_use('clam')
 
-        style.configure('TButton', font=(FONT_NAME, LABEL_FONT_SIZE, 'bold'))
+        style.configure('TButton', font=(FONT_NAME, LABEL_FONT_SIZE, FONT_WEIGHT_BOLD))
         style.configure('TLabel', font=(FONT_NAME, LABEL_FONT_SIZE))
         style.configure('TEntry', font=(FONT_NAME, LABEL_FONT_SIZE))
         style.configure('TCombobox', font=(FONT_NAME, LABEL_FONT_SIZE))
         
-        style.configure('Title.TLabel', font=(FONT_NAME, TITLE_FONT_SIZE, 'bold'), foreground=TITLE_COLOR)
+        style.configure('Title.TLabel', font=(FONT_NAME, TITLE_FONT_SIZE, FONT_WEIGHT_BOLD), foreground=TITLE_COLOR)
         style.configure('Subtitle.TLabel', font=(FONT_NAME, SUBTITLE_FONT_SIZE), foreground=SUBTITLE_COLOR)
-        style.configure('Data.TLabel', font=(FONT_NAME, DATA_FONT_SIZE, 'bold'), foreground=DATA_COLOR)
-        style.configure('DataLabel.TLabel', font=(FONT_NAME, LABEL_FONT_SIZE), foreground=DATA_LABEL_COLOR)    
+        style.configure('Data.TLabel', font=(FONT_NAME, DATA_FONT_SIZE, FONT_WEIGHT_BOLD), foreground=DATA_COLOR)
+        style.configure('DataLabel.TLabel', font=(FONT_NAME, LABEL_FONT_SIZE), foreground=DATA_LABEL_COLOR)
 
     def setup_notebook(self):
         self.notebook = ttk.Notebook(self.root)

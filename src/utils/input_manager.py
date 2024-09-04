@@ -4,6 +4,7 @@ import win32gui
 import win32process
 import psutil
 import logging
+from utils.constants import INPUT_EVENT_WAIT_TIME
 
 class InputManager:
     def __init__(self, tracker):
@@ -34,7 +35,7 @@ class InputManager:
         mouse_listener.start()
 
         while self.tracker.running:
-            self.input_event.wait(1)  # Wait for 1 second or until set()
+            self.input_event.wait(INPUT_EVENT_WAIT_TIME)  # Wait for 1 second or until set()
             self.input_event.clear()
 
         keyboard_listener.stop()

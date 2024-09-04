@@ -1,42 +1,42 @@
 import tkinter as tk
 from tkinter import ttk
 from utils.constants import *
-# from utils.font_loader import get_font
+from utils.constants import (
+    MINI_WINDOW_TITLE, MINI_WINDOW_BG_COLOR, MINI_WINDOW_APM_COLOR,
+    MINI_WINDOW_EAPM_COLOR, MINI_WINDOW_LABEL_COLOR, FONT_NAME, MINI_WINDOW_SIZE,
+    FONT_WEIGHT_BOLD
+)
 
 class MiniWindow:
     def __init__(self, root, tracker):
         self.root = root
         self.tracker = tracker
-        # self.custom_fonts = custom_fonts
         self.window = tk.Toplevel(root)
         self.setup_mini_window()
 
     def setup_mini_window(self):
-        self.window.title("APM Tracker Mini")
+        self.window.title(MINI_WINDOW_TITLE)
         self.window.attributes('-topmost', True)
         self.window.withdraw()
         self.window.overrideredirect(True)
 
-        self.frame = tk.Frame(self.window, bg='#2E3440')  # Nord theme background color
+        self.frame = tk.Frame(self.window, bg=MINI_WINDOW_BG_COLOR)
         self.frame.pack(expand=True, fill='both')
 
         self.apm_var = tk.StringVar()
         self.eapm_var = tk.StringVar()
 
-        # value_font = get_font(self.custom_fonts, 12, "bold")
-        # label_font = get_font(self.custom_fonts, 10)
-
         # APM Value and Label
-        self.apm_frame = tk.Frame(self.frame, bg='#2E3440')
+        self.apm_frame = tk.Frame(self.frame, bg=MINI_WINDOW_BG_COLOR)
         self.apm_frame.pack(fill='x', padx=2, pady=(2, 1))
-        self.apm_value = tk.Label(self.apm_frame, textvariable=self.apm_var, font=(FONT_NAME, MINI_WINDOW_SIZE, "bold"), bg=MINI_WINDOW_BG_COLOR, fg=MINI_WINDOW_APM_COLOR, anchor='e')
+        self.apm_value = tk.Label(self.apm_frame, textvariable=self.apm_var, font=(FONT_NAME, MINI_WINDOW_SIZE, FONT_WEIGHT_BOLD), bg=MINI_WINDOW_BG_COLOR, fg=MINI_WINDOW_APM_COLOR, anchor='e')
         self.apm_value.pack(side='left')
-        tk.Label(self.apm_frame, text="APM", font=(FONT_NAME, MINI_WINDOW_SIZE ), bg=MINI_WINDOW_BG_COLOR, fg=MINI_WINDOW_LABEL_COLOR).pack(side='right', padx=(1, 0))
+        tk.Label(self.apm_frame, text="APM", font=(FONT_NAME, MINI_WINDOW_SIZE), bg=MINI_WINDOW_BG_COLOR, fg=MINI_WINDOW_LABEL_COLOR).pack(side='right', padx=(1, 0))
 
         # eAPM Value and Label
-        self.eapm_frame = tk.Frame(self.frame, bg='#2E3440')
+        self.eapm_frame = tk.Frame(self.frame, bg=MINI_WINDOW_BG_COLOR)
         self.eapm_frame.pack(fill='x', padx=2, pady=(1, 2))
-        self.eapm_value = tk.Label(self.eapm_frame, textvariable=self.eapm_var, font=(FONT_NAME, MINI_WINDOW_SIZE, "bold"), bg=MINI_WINDOW_BG_COLOR, fg=MINI_WINDOW_EAPM_COLOR, anchor='e')
+        self.eapm_value = tk.Label(self.eapm_frame, textvariable=self.eapm_var, font=(FONT_NAME, MINI_WINDOW_SIZE, FONT_WEIGHT_BOLD), bg=MINI_WINDOW_BG_COLOR, fg=MINI_WINDOW_EAPM_COLOR, anchor='e')
         self.eapm_value.pack(side='left')
         tk.Label(self.eapm_frame, text="eAPM", font=(FONT_NAME, MINI_WINDOW_SIZE), bg=MINI_WINDOW_BG_COLOR, fg=MINI_WINDOW_LABEL_COLOR).pack(side='right', padx=(1, 0))
 

@@ -2,20 +2,25 @@ import json
 import yaml
 import logging
 from utils.window_utils import update_window_list
+from utils.constants import (
+    DEFAULT_TRANSPARENCY, DEFAULT_UPDATE_INTERVAL, DEFAULT_GRAPH_UPDATE_INTERVAL,
+    DEFAULT_GRAPH_TIME_RANGE, DEFAULT_MAX_ACTIONS_PER_SECOND,
+    DEFAULT_ACTION_COOLDOWN, DEFAULT_EAPM_COOLDOWN, GRAPH_TIME_RANGE_OPTIONS
+)
 
 class SettingsManager:
     def __init__(self):
         self.target_program = ""
-        self.transparency = 1.0
+        self.transparency = DEFAULT_TRANSPARENCY
         self.window_list = []
         self.log_level = logging.INFO
-        self.update_interval = 500
-        self.graph_update_interval = 1000
-        self.graph_time_range = 60
-        self.max_actions_per_second = 50
-        self.action_cooldown = 0.05
-        self.eapm_cooldown = 0.5
-        self.graph_time_range_options = [30, 60, 120, 300]  # New option for preset time ranges
+        self.update_interval = DEFAULT_UPDATE_INTERVAL
+        self.graph_update_interval = DEFAULT_GRAPH_UPDATE_INTERVAL
+        self.graph_time_range = DEFAULT_GRAPH_TIME_RANGE
+        self.max_actions_per_second = DEFAULT_MAX_ACTIONS_PER_SECOND
+        self.action_cooldown = DEFAULT_ACTION_COOLDOWN
+        self.eapm_cooldown = DEFAULT_EAPM_COOLDOWN
+        self.graph_time_range_options = GRAPH_TIME_RANGE_OPTIONS
         self.update_window_list()
 
     def save_settings(self):
