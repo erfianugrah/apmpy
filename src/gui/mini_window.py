@@ -19,7 +19,7 @@ class MiniWindow:
         self.window.attributes('-topmost', True)
         self.window.withdraw()
         self.window.overrideredirect(True)
-
+        self.window.bind('<ButtonRelease-1>', self.snap_to_border)
         self.frame = tk.Frame(self.window, bg=MINI_WINDOW_BG_COLOR)
         self.frame.pack(expand=True, fill='both')
 
@@ -43,6 +43,32 @@ class MiniWindow:
         self.window.bind('<ButtonPress-1>', self.start_move)
         self.window.bind('<B1-Motion>', self.do_move)
         self.window.bind('<Double-Button-1>', self.tracker.gui_manager.toggle_view)
+
+    def snap_to_border(self, event):
+        x, y = self.window.winfo_x(), self.window.winfo_y()
+        width, height = self.window.winfo_width(), self.window.winfo_height()
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+
+        snap_distance = 20  # pixels
+
+        # Snap to left or right border
+        if x < snap_distance:
+            x = 0
+        elif x > screen_width - width - snap_distance:
+            x = screen_width - width
+
+        # Snap to top or bottom border
+        if y < snap_distance:
+            y = 0
+        elif y > screen_height - height - snap_distance:
+            y = screen_height - height
+
+        self.window.geometry(f"+{x}+{y}")
+
+        # Keep window on top after snapping
+        self.window.attributes('-topmost', True)
+        self.window.update()
 
     def update_values(self, current_apm, current_eapm):
         self.apm_var.set(f"{current_apm}")
