@@ -11,31 +11,25 @@ class InputManager:
         self.tracker = tracker
         self.input_event = threading.Event()
         self.last_key = None
+        self.target_pid = None
 
     def input_loop(self):
         def on_press(key):
             if self.is_target_program_active():
                 self.tracker.on_action('keyboard')
-                logging.debug(f"Keyboard action recorded for target program: {self.tracker.settings_manager.target_program}")
 
         def on_click(x, y, button, pressed):
             if pressed and self.is_target_program_active():
                 self.tracker.on_action('mouse_click')
-                logging.debug(f"Mouse click recorded for target program: {self.tracker.settings_manager.target_program}")
-
-        def on_move(x, y):
-            if self.is_target_program_active():
-                self.tracker.on_action('selection')
-                logging.debug(f"Mouse move recorded for target program: {self.tracker.settings_manager.target_program}")
 
         keyboard_listener = keyboard.Listener(on_press=on_press)
-        mouse_listener = mouse.Listener(on_click=on_click, on_move=on_move)
+        mouse_listener = mouse.Listener(on_click=on_click)
 
         keyboard_listener.start()
         mouse_listener.start()
 
         while self.tracker.running:
-            self.input_event.wait(INPUT_EVENT_WAIT_TIME)  # Wait for 1 second or until set()
+            self.input_event.wait(INPUT_EVENT_WAIT_TIME)
             self.input_event.clear()
 
         keyboard_listener.stop()
@@ -43,18 +37,19 @@ class InputManager:
 
     def is_target_program_active(self):
         if not self.tracker.settings_manager.target_program:
-            return True  # If no target program is set, track all inputs
+            return True
 
         try:
             hwnd = win32gui.GetForegroundWindow()
             _, pid = win32process.GetWindowThreadProcessId(hwnd)
-            process = psutil.Process(pid)
-            active_window = process.name().lower()
-            target_program = self.tracker.settings_manager.target_program.lower()
             
-            is_active = target_program in active_window
-            logging.debug(f"Active window: {active_window}, Target program: {target_program}, Is active: {is_active}")
-            return is_active
+            if self.target_pid != pid:
+                self.target_pid = pid
+                process = psutil.Process(pid)
+                active_window = process.name().lower()
+                target_program = self.tracker.settings_manager.target_program.lower()
+                return target_program in active_window
+            return True
         except Exception as e:
             logging.error(f"Error checking active window: {e}")
             return False
