@@ -17,7 +17,9 @@ class GraphFrame:
         self.parent = parent
         self.tracker = tracker
         self.frame = ttk.Frame(parent)
+        self.animation_running = False
         self.setup_graph_frame()
+
 
     def setup_graph_frame(self):
         plt.rcParams['font.family'] = "monospace" 
@@ -53,6 +55,17 @@ class GraphFrame:
             blit=True, 
             save_count=100
         )
+        self.ani.event_source.stop()  # Start with animation paused
+
+    def start_animation(self):
+        if not self.animation_running:
+            self.ani.event_source.start()
+            self.animation_running = True
+
+    def stop_animation(self):
+        if self.animation_running:
+            self.ani.event_source.stop()
+            self.animation_running = False
 
     def update_graph(self, frame):
         current_time = self.tracker.data_manager.current_time()

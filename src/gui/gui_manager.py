@@ -20,6 +20,7 @@ class GUIManager:
         self.icon_path = get_icon_path()
         self.update_counter = 0
         self.update_frequency = 5  # Update GUI every 5 cycles
+        self.current_tab = 'Main'
 
     def setup_gui(self):
         self.root = tk.Tk()
@@ -58,6 +59,16 @@ class GUIManager:
         self.notebook.add(self.graph_frame.frame, text='Graph')
         self.notebook.add(self.settings_frame.frame, text='Settings')
 
+        self.notebook.bind('<<NotebookTabChanged>>', self.on_tab_change)
+
+    def on_tab_change(self, event):
+        tab = event.widget.tab('current')['text']
+        if tab == 'Graph' and self.current_tab != 'Graph':
+            self.graph_frame.start_animation()
+        elif self.current_tab == 'Graph' and tab != 'Graph':
+            self.graph_frame.stop_animation()
+        self.current_tab = tab
+
     def create_mini_window(self):
         self.mini_window = MiniWindow(self.root, self.tracker)
 
@@ -73,11 +84,14 @@ class GUIManager:
         if self.is_mini_view:
             self.root.withdraw()
             self.mini_window.show()
+            self.graph_frame.stop_animation()
             if platform.system() == 'Windows':
                 set_appwindow(self.mini_window.window)
         else:
             self.mini_window.hide()
             self.root.deiconify()
+            if self.current_tab == 'Graph':
+                self.graph_frame.start_animation()
 
     def update_gui(self):
         if not self.tracker.running:
