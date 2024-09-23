@@ -5,6 +5,7 @@ APM Tracker is a sophisticated Python application designed to measure and displa
 ## Features
 
 - Real-time tracking of APM and eAPM with customizable update intervals
+- RTS-specific eAPM calculation that considers the strategic value of different actions
 - Dynamic graphical display of APM and eAPM over time with adjustable time ranges
 - Peak APM and eAPM tracking for performance benchmarking
 - Average APM and eAPM calculation for long-term performance analysis
@@ -83,7 +84,17 @@ To run the Linux binary:
 APM is calculated by counting the total number of actions (keyboard presses and mouse clicks) performed by the user in one minute. The application tracks these actions in real-time and updates the APM count at customizable intervals.
 
 ### eAPM (effective Actions Per Minute)
-eAPM is a more sophisticated metric designed to measure meaningful actions. It filters out repetitive or less significant inputs to provide a more accurate representation of impactful user actions.
+eAPM is a more sophisticated metric designed to measure meaningful actions, especially in the context of RTS games. The eAPM calculation takes into account the following factors:
+
+1. **Action Types**: Different types of actions (e.g., building, training units, attacking) are weighted based on their perceived strategic value in RTS games.
+
+2. **Action Sequences**: The algorithm recognizes common RTS action patterns, such as creating control groups, selecting units and issuing commands, or using build hotkeys.
+
+3. **Cooldowns**: To prevent inflation from rapid, repetitive actions, the algorithm implements cooldown periods for individual actions and sequences.
+
+4. **Weighted Calculation**: The final eAPM score is a weighted sum of effective actions, providing a more nuanced representation of a player's strategic input.
+
+This refined eAPM calculation aims to provide a more accurate measure of a player's effective actions in RTS games, going beyond simple input counting to consider the strategic value and context of each action.
 
 ### Graphs
 The application generates real-time graphs of APM and eAPM. Users can customize the time range and update intervals to suit their preferences and analysis needs.
@@ -115,7 +126,6 @@ apm-tracker/
 │   │   ├── constants.py
 │   │   ├── window_utils.py
 │   │   ├── icon_utils.py
-│   │   ├── font_loader.py
 │   │   └── error_handler.py
 │   │
 │   ├── main.py
@@ -141,128 +151,6 @@ apm-tracker/
 ├── README.md
 └── requirements.txt
 ```
-
-### Detailed Module Descriptions
-
-#### src/
-
-The `src` directory contains the core application code.
-
-##### main.py
-- **Purpose**: Serves as the entry point of the application.
-- **Functionality**:
-  - Initializes the APMTracker
-  - Sets up logging based on user settings
-  - Handles the main execution loop and exception management
-
-##### tracker.py
-- **Purpose**: Contains the main `APMTracker` class.
-- **Functionality**:
-  - Coordinates between other modules
-  - Manages the overall application state
-  - Initializes and manages key components like DataManager, SettingsManager, GUIManager, and InputManager
-
-#### src/gui/
-
-The `gui` directory contains all GUI-related modules.
-
-##### gui_manager.py
-- **Purpose**: Manages the graphical user interface.
-- **Functionality**:
-  - Creates and updates the main window, graph, and mini-view
-  - Handles GUI events and user interactions
-  - Manages the transition between full view and mini view
-
-##### main_frame.py
-- **Purpose**: Defines the main frame of the application.
-- **Functionality**:
-  - Displays current APM, eAPM, peak values, and averages
-  - Updates values in real-time
-
-##### graph_frame.py
-- **Purpose**: Manages the graphical representation of APM and eAPM data.
-- **Functionality**:
-  - Creates and updates the APM/eAPM histogram
-  - Handles graph customization (time range, update intervals)
-
-##### settings_frame.py
-- **Purpose**: Provides a user interface for application settings.
-- **Functionality**:
-  - Allows users to adjust transparency, target program, update intervals, and other settings
-  - Handles saving and loading of user preferences
-
-##### mini_window.py
-- **Purpose**: Implements a compact view of the application.
-- **Functionality**:
-  - Displays essential information in a small, unobtrusive window
-  - Allows for easy toggling between full and mini views
-
-#### src/utils/
-
-The `utils` directory contains utility modules and managers for various functionalities.
-
-##### input_manager.py
-- **Purpose**: Handles keyboard and mouse input detection.
-- **Functionality**:
-  - Uses the `pynput` library to detect user actions
-  - Filters and processes input events
-  - Sends processed actions to the tracker
-
-##### data_manager.py
-- **Purpose**: Manages data collection and calculations.
-- **Functionality**:
-  - Stores action data
-  - Calculates APM and eAPM in real-time
-  - Provides methods for data analysis and retrieval
-
-##### settings_manager.py
-- **Purpose**: Handles application settings and configurations.
-- **Functionality**:
-  - Manages saving and loading of user settings
-  - Handles the target program functionality
-  - Provides methods to update and retrieve various settings
-
-##### constants.py
-- **Purpose**: Defines constant values used throughout the application.
-- **Functionality**:
-  - Stores default values for settings
-  - Defines color schemes and font settings
-  - Provides other constant values used across modules
-
-##### window_utils.py
-- **Purpose**: Provides utility functions for window management.
-- **Functionality**:
-  - Handles window list updates for target program selection
-  - Manages window styles and attributes
-
-##### icon_utils.py
-- **Purpose**: Manages application icons and related utilities.
-- **Functionality**:
-  - Provides functions to locate and set application icons
-  - Ensures proper icon display across different platforms
-
-#### icons/
-
-This directory contains the application icons in various formats:
-- `keebfire.ico`: Windows icon file
-- `keebfire.jpg` and `keebfire.png`: Image files for cross-platform use
-
-#### screenshots/
-
-Contains screenshots of the application for documentation and promotional purposes:
-- `apm_graph.png`: Screenshot of the APM/eAPM graph
-- `apm_main_window.png`: Main application window screenshot
-- `mini_window.png`: Mini view screenshot
-- `obs_mini_window.png`: OBS Detection
-- `demo.gif`: Demo of the program
-
-#### .github/workflows/deploy.yml
-
-- **Purpose**: Defines the GitHub Actions workflow for automated builds and releases.
-- **Functionality**:
-  - Triggers on new tag pushes or manual activation
-  - Builds Windows and Linux executables
-  - Creates GitHub releases with the built executables
 
 ## Building the Application
 
