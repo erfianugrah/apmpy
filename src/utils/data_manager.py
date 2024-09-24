@@ -118,7 +118,8 @@ class DataManager:
     def calculate_current_eapm(self):
         current_time = time.time()
         minute_ago = current_time - 60
-        return sum(weight for t, weight in self.effective_actions if t > minute_ago)
+        eapm = sum(weight for t, weight in self.effective_actions if t > minute_ago)
+        return round(eapm) 
 
     def calculate_average_apm(self):
         total_actions = len(self.actions)
@@ -128,7 +129,10 @@ class DataManager:
     def calculate_average_eapm(self):
         total_effective_actions = sum(weight for _, weight in self.effective_actions)
         elapsed_time = (time.time() - self.start_time) / 60
-        return total_effective_actions / elapsed_time if elapsed_time > 0 else 0
+        if elapsed_time > 0:
+            eapm = total_effective_actions / elapsed_time
+            return round(eapm)  
+        return 0
 
     def export_data(self, filename=None):
         if filename is None:
